@@ -76,9 +76,10 @@ class LongControl:
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
     # Interp control trajectory
     speeds = long_plan.speeds
-    if len(speeds) == CONTROL_N:
+    accels = long_plan.accels
+    if len(speeds) == len(accels) == CONTROL_N:
       v_target_now = interp(t_since_plan, T_IDXS[:CONTROL_N], speeds)
-      a_target_now = interp(t_since_plan, T_IDXS[:CONTROL_N], long_plan.accels)
+      a_target_now = interp(t_since_plan, T_IDXS[:CONTROL_N], accels)
 
       v_target_lower = interp(self.CP.longitudinalActuatorDelayLowerBound + t_since_plan, T_IDXS[:CONTROL_N], speeds)
       a_target_lower = 2 * (v_target_lower - v_target_now) / self.CP.longitudinalActuatorDelayLowerBound - a_target_now
@@ -90,11 +91,14 @@ class LongControl:
       a_target = min(a_target_lower, a_target_upper)
 
       v_target_1sec = interp(self.CP.longitudinalActuatorDelayUpperBound + t_since_plan + 1.0, T_IDXS[:CONTROL_N], speeds)
+      v_target_future = speeds[-1]
+      a_target_future = accels[-1]
     else:
       v_target = 0.0
       v_target_now = 0.0
       v_target_1sec = 0.0
       a_target = 0.0
+      a_target_future = 0.0
 
     self.pid.neg_limit = accel_limits[0]
     self.pid.pos_limit = accel_limits[1]
@@ -135,4 +139,4 @@ class LongControl:
 
     self.last_output_accel = clip(output_accel, accel_limits[0], accel_limits[1])
 
-    return self.last_output_accel
+    return self.last_output_accel, a_target_future
