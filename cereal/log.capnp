@@ -917,6 +917,10 @@ struct LongitudinalPlan @0xe00b5b3eba12876c {
 
   solverExecutionTime @35 :Float32;
 
+  # desired xs over next 2.5 s
+  xs @36 :List(Float32);
+  zs @37 :List(Float32);
+
   enum LongitudinalPlanSource {
     cruise @0;
     lead0 @1;
@@ -980,6 +984,9 @@ struct LateralPlan @0xe1e9318e2ae8b51e {
   curvatureRates @28 :List(Float32);
 
   solverExecutionTime @30 :Float32;
+
+  # desired y positions over next 2.5s in m
+  ys @32 :List(Float32);
 
   enum Desire {
     none @0;
