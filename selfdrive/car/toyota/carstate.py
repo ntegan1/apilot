@@ -25,6 +25,9 @@ class CarState(CarStateBase):
     self.low_speed_lockout = False
     self.acc_type = 1
 
+    self.distance_btn = 0
+    self.distance_lines = 0
+
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
 
@@ -96,6 +99,10 @@ class CarState(CarStateBase):
       ret.cruiseState.speed = cp.vl["PCM_CRUISE_2"]["SET_SPEED"] * CV.KPH_TO_MS
       cluster_set_speed = cp.vl["PCM_CRUISE_SM"]["UI_SET_SPEED"]
 
+    self.distance_btn = cp.vl["SDSU"]["FD_BUTTON"] % 2
+    self.distance_lines = (self.distance_lines + self.distance_btn) % 3
+    # lines on ui ====  (3 - self.distance_lines)
+
     # UI_SET_SPEED is always non-zero when main is on, hide until first enable
     if ret.cruiseState.speed != 0:
       is_metric = cp.vl["BODY_CONTROL_STATE_2"]["UNITS"] in (1, 2)
@@ -142,6 +149,7 @@ class CarState(CarStateBase):
   def get_can_parser(CP):
     signals = [
       # sig_name, sig_address
+      ("FD_BUTTON", "SDSU"),
       ("STEER_ANGLE", "STEER_ANGLE_SENSOR"),
       ("GEAR", "GEAR_PACKET"),
       ("BRAKE_PRESSED", "BRAKE_MODULE"),
@@ -174,6 +182,7 @@ class CarState(CarStateBase):
     ]
 
     checks = [
+      ("SDSU", 33),
       ("GEAR_PACKET", 1),
       ("LIGHT_STALK", 1),
       ("BLINKERS_STATE", 0.15),
