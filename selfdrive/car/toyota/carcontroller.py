@@ -61,7 +61,7 @@ class CarController:
 
     if disable_long:
       interceptor_gas_cmd = 0.
-      pcm_accel_cmd = -0.1
+      pcm_accel_cmd = 0.0
 
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
