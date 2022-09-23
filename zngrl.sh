@@ -24,6 +24,7 @@ get_file # if it doesn't already exist
 if cmdeq "cat"; then cat "${c}";
 elif cmdeq "num"; then load_diffs; diff_num
 elif cmdeq "get"; then diff_num=$2; load_diffs; diff_get ${diff_num}
+elif cmdeq "get_all"; then load_diffs; diff_get_all
 elif cmdeq "get_gitmodules"; then load_diffs; diff_get_gitmodules
 elif cmdeq "get_submodules"; then load_diffs; diff_get_submodules
 elif cmdeq "get_nomodules"; then load_diffs; diff_get_nomodules

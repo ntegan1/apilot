@@ -30,7 +30,7 @@ _diff_updateArray() {
   b=""
   _diff_arrayLength=0
   _diff_array=()
-  while read -r line; do
+  while IFS= read -r line; do
     if grep -q "^diff" <<<"${line}"; then
       if test ${a} -gt 0; then _diff_array+=("${b}"); fi
       a=$((a + 1))
@@ -73,21 +73,27 @@ diff_update() {
 diff_num() {
   echo ${_diff_arrayLength}
 }
+diff_get_all() {
+  for i in $(seq ${_diff_arrayLength}); do
+    i=$((i-1))
+    echo -n "${_diff_array[${i}]}"
+  done
+}
 diff_get() {
   a="$1"
   if test $a -ge ${_diff_arrayLength} || test $a -lt 0; then return; fi
 
-  echo "${_diff_array[${a}]}"
+  echo -n "${_diff_array[${a}]}"
 }
 diff_get_gitmodules() {
   idx="$(_diff_idx_gitmodules)"
   if test $idx -ge ${_diff_arrayLength} || test $idx -lt 0; then return; fi
-  echo "${_diff_array[${idx}]}"
+  echo -n "${_diff_array[${idx}]}"
 }
 diff_get_submodules() {
   idxs="$(_diff_idxs_submodules)"
   for i in ${idxs}; do
-    echo "${_diff_array[${i}]}"
+    echo -n "${_diff_array[${i}]}"
   done
 }
 diff_get_nomodules() {
@@ -97,7 +103,7 @@ diff_get_nomodules() {
     if echo "${idxs}" | grep -q $i; then
       continue
     else
-      echo "${_diff_array[${i}]}"
+      echo -n "${_diff_array[${i}]}"
     fi
   done
 }
