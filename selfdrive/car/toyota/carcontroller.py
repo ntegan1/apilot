@@ -39,6 +39,8 @@ class CarController:
     pcm_cancel_cmd = CC.cruiseControl.cancel
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
 
+    disable_long = CS.distance_lines == 1
+
     # gas and brake
     if self.CP.enableGasInterceptor and CC.longActive:
       MAX_INTERCEPTOR_GAS = 0.5
@@ -56,6 +58,10 @@ class CarController:
     else:
       interceptor_gas_cmd = 0.
     pcm_accel_cmd = clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+
+    if disable_long:
+      interceptor_gas_cmd = 0.
+      pcm_accel_cmd = -0.1
 
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
