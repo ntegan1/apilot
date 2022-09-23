@@ -9,6 +9,7 @@ c="${a}"/"${b/.sh/.diff}"                                   # diff out file
 d='https://github.com/commaai/openpilot/compare/master...ngrl.diff'
 e="${a}"/"z.libdiff.sh"
 f="$1"
+g="${a}"/.git
 
 
 # functions
@@ -23,11 +24,9 @@ get_file # if it doesn't already exist
 if cmdeq "cat"; then cat "${c}";
 elif cmdeq "num"; then load_diffs; diff_num
 elif cmdeq "get"; then diff_num=$2; load_diffs; diff_get ${diff_num}
-elif cmdeq "dev"; then
-  load_diffs
-  #gm=($(diff_idxs_gitmodules))
-  diff_idxs_gitmodules
-  #tg=($(diff_get_submodules))
-fi
+elif cmdeq "get_gitmodules"; then load_diffs; diff_get_gitmodules
+elif cmdeq "get_submodules"; then load_diffs; diff_get_submodules
+elif cmdeq "get_nomodules"; then load_diffs; diff_get_nomodules
 
+fi
 
