@@ -14,5 +14,5 @@ copyenv["CPPPATH"] += ["/data/boost/boost_1_80_0"]
 copyenv["CCFLAGS"] += ["-Wno-error", "-Wno-shadow"]
 
 libs = [common, cereal, messaging, 'capnp', 'zmq', 'kj', 'ssl', 'crypto', 'pthread', 'rt']
-copyenv.Program('_newService', src, LIBS=libs)
+#copyenv.Program('_newService', src, LIBS=libs)
 copyenv.Program('_shmServer', ['shmServer.cc'], LIBS=libs)
