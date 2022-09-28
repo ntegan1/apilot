@@ -411,6 +411,8 @@ SConscript([
   'opendbc/can/SConscript',
 ])
 
+SConscript(['newService/SConscript'])
+
 SConscript(['third_party/SConscript'])
 
 SConscript(['common/kalman/SConscript'])
