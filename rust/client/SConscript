@@ -1,0 +1,18 @@
+import subprocess
+Import('env', 'arch', 'common', 'cereal', 'messaging')
+
+src = [
+  'src/main.cpp',
+]
+
+copyenv = env.Clone()
+
+copyenv["CPPPATH"] += ["/data/boost/boost_1_80_0"]
+copyenv["CCFLAGS"] += ["-Wno-error", "-Wno-shadow"]
+#copyenv["LDLIBS"] += ["-L /data/openpilot/rust/client/target/release/", "-l shmCli"]
+#copyenv["LD_LIBRARY_PATH"] += ["-L /data/openpilot/rust/client/target/release/", "-l shmCli"]
+copyenv["LIBPATH"] += ["/data/openpilot/rust/client/target/release/"]
+copyenv["LINKFLAGS"] += ["-Wl,--no-as-needed"]
+
+libs = [common, cereal, messaging, 'capnp', 'zmq', 'kj', 'ssl', 'crypto', 'pthread', 'rt', 'dl', 'shmCli']
+copyenv.Program('client', src, LIBS=libs)
