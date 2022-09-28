@@ -1,4 +1,4 @@
-from cereal import car
+from cereal import car, log, messaging
 from common.numpy_fast import clip, interp
 from selfdrive.car import apply_toyota_steer_torque_limits, create_gas_interceptor_command, make_can_msg
 from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_command, \
@@ -32,12 +32,26 @@ class CarController:
     self.packer = CANPacker(dbc_name)
     self.gas = 0
     self.accel = 0
+    self.nsm = None
+    self.slider = 0
 
   def update(self, CC, CS):
     actuators = CC.actuators
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
+
+    if self.nsm == None:
+      self.nsm = messaging.SubMaster(["newService"])
+    else:
+      self.slider = self.nsm["newService"].sliderone
+    a = self.nsm.update(0)
+    if self.slider > 0:
+      actuators.accel = float(self.slider) / 127. * CarControllerParams.ACCEL_MAX
+      actuators.accel = clip(actuators.accel, 0., CarControllerParams.ACCEL_MAX)
+    elif self.slider < 0:
+      actuators.accel = float(self.slider) / 128. * -1 * CarControllerParams.ACCEL_MIN
+      actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, 0)
 
     # gas and brake
     if self.CP.enableGasInterceptor and CC.longActive:
