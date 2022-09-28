@@ -79,6 +79,7 @@ services = {
   "userFlag": (True, 0., 1),
 
   # debug
+  "newService": (True, 0.),
   "testJoystick": (True, 0.),
   "roadEncodeData": (False, 20.),
   "driverEncodeData": (False, 20.),
