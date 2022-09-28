@@ -1,7 +1,9 @@
+from cereal import car, log, messaging
 #!/usr/bin/env python3
 import os
 import math
 from typing import SupportsFloat
+from selfdrive.car.toyota.values import CarControllerParams
 
 from cereal import car, log
 from common.numpy_fast import clip
@@ -59,6 +61,7 @@ ACTUATOR_FIELDS = tuple(car.CarControl.Actuators.schema.fields.keys())
 ACTIVE_STATES = (State.enabled, State.softDisabling, State.overriding)
 ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 
+from cereal import car, log, messaging
 
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
@@ -66,6 +69,13 @@ class Controls:
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
     self.branch = get_short_branch("")
+    self.nsm = None
+    self.slider = 0
+    if self.nsm == None:
+      self.nsm = messaging.SubMaster(["newService"])
+    else:
+      a = self.nsm.update(0)
+      self.slider = self.nsm["newService"].sliderone
 
     # Setup sockets
     self.pm = pm
@@ -620,7 +630,16 @@ class Controls:
       # accel PID loop
       pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_kph * CV.KPH_TO_MS)
       t_since_plan = (self.sm.frame - self.sm.rcv_frame['longitudinalPlan']) * DT_CTRL
-      actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
+      if self.slider > 0:
+        actuators.accel = float(self.slider) / 127. * CarControllerParams.ACCEL_MAX
+        actuators.accel = clip(actuators.accel, 0., CarControllerParams.ACCEL_MAX)
+        self.LoC.reset(v_pid=CS.vEgo)
+      elif self.slider < 0:
+        actuators.accel = float(self.slider) / 128. * -1 * CarControllerParams.ACCEL_MIN
+        actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, 0)
+        self.LoC.reset(v_pid=CS.vEgo)
+      else:
+        actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
 
       # Steering PID loop and lateral MPC
       self.desired_curvature, self.desired_curvature_rate = get_lag_adjusted_curvature(self.CP, CS.vEgo,
