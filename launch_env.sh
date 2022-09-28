@@ -1,5 +1,10 @@
 #!/usr/bin/bash
 
+source /data/openpilot/rust/env.sh
+
+sudo mount -o remount,suid /data
+sudo setcap 'cap_net_bind_service=+ep' /data/openpilot/rust/http/target/release/http
+
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1

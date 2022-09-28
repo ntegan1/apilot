@@ -1687,6 +1687,12 @@ struct LiveLongitudinalMpcData {
   cost @10 :Float64;
 }
 
+struct NewService {
+  # convenient for debug and live tuning
+  sliderone @0: Int8;
+  slidertwo @1: Int8;
+}
+
 struct Joystick {
   # convenient for debug and live tuning
   axes @0: List(Float32);
@@ -2017,6 +2023,7 @@ struct Event {
     userFlag @93 :UserFlag;
 
     # *********** debug ***********
+    newService @102:NewService;
     testJoystick @52 :Joystick;
     roadEncodeData @86 :EncodeData;
     driverEncodeData @87 :EncodeData;

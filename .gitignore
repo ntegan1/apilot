@@ -1,3 +1,8 @@
+server.pem
+server.cert.pem
+server.key.pem
+server.pfx
+shmememem
 venv/
 .env
 .clang-format
