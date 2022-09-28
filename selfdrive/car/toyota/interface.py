@@ -249,11 +249,6 @@ class CarInterface(CarInterfaceBase):
         ret.stoppingDecelRate = 0.3 # reach stopping target smoothly
     else:
       set_long_tune(ret.longitudinalTuning, LongTunes.TSS)
-    ret.vEgoStopping = 0.2 #krkeegan rav4tss2
-    ret.vEgoStarting = 0.2 #maybe 2much for tssp
-    ret.longitudinalActuatorDelayLowerBound = 0.3 #rav4tss2 krkeegan
-    ret.longitudinalActuatorDelayUpperBound = 0.3 #todogoodfortssp??
-    ret.stoppingDecelRate = 0.4 #half
 
     return ret
 
