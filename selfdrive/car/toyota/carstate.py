@@ -100,8 +100,10 @@ class CarState(CarStateBase):
       cluster_set_speed = cp.vl["PCM_CRUISE_SM"]["UI_SET_SPEED"]
 
     self.distance_btn = cp.vl["SDSU"]["FD_BUTTON"] % 2
-    self.distance_lines = (self.distance_lines + self.distance_btn) % 3
+    # self.distance_lines = (self.distance_lines + self.distance_btn) % 3
     # lines on ui ====  (3 - self.distance_lines)
+    distance_lines = cp.vl["PCM_CRUISE_SM"]["DISTANCE_LINES"] - 1
+    self.distance_lines = distance_lines % 3
 
     # UI_SET_SPEED is always non-zero when main is on, hide until first enable
     if ret.cruiseState.speed != 0:
@@ -179,6 +181,7 @@ class CarState(CarStateBase):
       ("TURN_SIGNALS", "BLINKERS_STATE"),
       ("LKA_STATE", "EPS_STATUS"),
       ("AUTO_HIGH_BEAM", "LIGHT_STALK"),
+      ("DISTANCE_LINES", "PCM_CRUISE_SM"),
     ]
 
     checks = [
@@ -196,6 +199,7 @@ class CarState(CarStateBase):
       ("PCM_CRUISE", 33),
       ("PCM_CRUISE_SM", 1),
       ("STEER_TORQUE_SENSOR", 50),
+      ("PCM_CRUISE_SM", 1),
     ]
 
     if CP.flags & ToyotaFlags.HYBRID:
