@@ -10,4 +10,4 @@ bin_dir=${toolchain_dir}/${toolchain}/bin
 export PATH="${PATH}:${bin_dir}"
 
 # http bind address (addy on the ssl cert too)
-export BIND="192.168.43.1"
+export BIND="192.168.1.2"
