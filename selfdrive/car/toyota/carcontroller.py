@@ -46,10 +46,10 @@ class CarController:
     else:
       self.slider = self.nsm["newService"].sliderone
     a = self.nsm.update(0)
-    if self.slider > 0:
+    if self.slider > 30:
       actuators.accel = float(self.slider) / 127. * CarControllerParams.ACCEL_MAX
       actuators.accel = clip(actuators.accel, 0., CarControllerParams.ACCEL_MAX)
-    elif self.slider < 0:
+    elif self.slider < 5:
       actuators.accel = float(self.slider) / 128. * -1 * CarControllerParams.ACCEL_MIN
       actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, 0)
 
