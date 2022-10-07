@@ -282,7 +282,7 @@ Export('envCython')
 
 # Qt build environment
 qt_env = env.Clone()
-qt_modules = ["Widgets", "Gui", "Core", "Network", "Concurrent", "Multimedia", "Quick", "Qml", "QuickWidgets", "Location", "Positioning", "DBus"]
+qt_modules = ["Widgets", "Gui", "Core", "Network", "Concurrent", "Multimedia", "Quick", "Qml", "QuickWidgets", "Location", "Positioning", "DBus", "WebSockets"]
 
 qt_libs = []
 if arch == "Darwin":
@@ -432,6 +432,7 @@ SConscript(['selfdrive/ui/SConscript'])
 SConscript(['selfdrive/navd/SConscript'])
 
 SConscript(['tools/replay/SConscript'])
+SConscript(['ws/SConscript'])
 
 opendbc = abspath([File('opendbc/can/libdbc.so')])
 Export('opendbc')
