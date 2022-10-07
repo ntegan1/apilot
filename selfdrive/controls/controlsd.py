@@ -73,9 +73,6 @@ class Controls:
     self.slider = 0
     if self.nsm == None:
       self.nsm = messaging.SubMaster(["newService"])
-    else:
-      a = self.nsm.update(0)
-      self.slider = self.nsm["newService"].sliderone
 
     # Setup sockets
     self.pm = pm
@@ -630,6 +627,12 @@ class Controls:
       # accel PID loop
       pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_kph * CV.KPH_TO_MS)
       t_since_plan = (self.sm.frame - self.sm.rcv_frame['longitudinalPlan']) * DT_CTRL
+
+      if self.nsm == None:
+        pass
+      else:
+        a = self.nsm.update(0)
+        self.slider = self.nsm["newService"].sliderone
       if self.slider > 0:
         actuators.accel = float(self.slider) / 127. * CarControllerParams.ACCEL_MAX
         actuators.accel = clip(actuators.accel, 0., CarControllerParams.ACCEL_MAX)
