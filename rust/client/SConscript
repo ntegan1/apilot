@@ -7,7 +7,7 @@ src = [
 
 copyenv = env.Clone()
 
-copyenv["CPPPATH"] += ["/data/boost/boost_1_80_0"]
+#copyenv["CPPPATH"] += ["/data/boost/boost_1_80_0"]
 copyenv["CCFLAGS"] += ["-Wno-error", "-Wno-shadow"]
 #copyenv["LDLIBS"] += ["-L /data/openpilot/rust/client/target/release/", "-l shmCli"]
 #copyenv["LD_LIBRARY_PATH"] += ["-L /data/openpilot/rust/client/target/release/", "-l shmCli"]
