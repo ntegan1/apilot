@@ -430,6 +430,7 @@ SConscript(['selfdrive/locationd/SConscript'])
 SConscript(['selfdrive/sensord/SConscript'])
 SConscript(['selfdrive/ui/SConscript'])
 SConscript(['selfdrive/navd/SConscript'])
+SConscript(['ws/SConscript'])
 
 SConscript(['tools/replay/SConscript'])
 

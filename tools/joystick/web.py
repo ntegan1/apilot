@@ -72,7 +72,7 @@ def handle_timeout():
 
 def main():
   threading.Thread(target=handle_timeout, daemon=True).start()
-  app.run(host="0.0.0.0")
+  app.run(host="0.0.0.0", port='443', ssl_context=('adhoc'))
 
 if __name__ == '__main__':
   main()
