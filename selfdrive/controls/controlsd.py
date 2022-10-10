@@ -71,6 +71,9 @@ class Controls:
     self.branch = get_short_branch("")
     self.nsm = None
     self.slider = 0
+    self.sliderPrev = self.slider
+    self.sliderStaleCount = 0
+    self.sliderSTALECOUNTMAX = int(0.7 / DT_CTRL)
     if self.nsm == None:
       self.nsm = messaging.SubMaster(["newService"])
 
@@ -628,21 +631,35 @@ class Controls:
       # accel PID loop
       pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_kph * CV.KPH_TO_MS)
       t_since_plan = (self.sm.frame - self.sm.rcv_frame['longitudinalPlan']) * DT_CTRL
-
       if self.nsm == None:
         pass
       else:
         a = self.nsm.update(0)
-        self.slider = self.nsm["newService"].sliderone
+      self.slider = self.nsm["newService"].sliderone
+      if self.slider != self.sliderPrev:
+        self.sliderStaleCount = 0
+      elif self.sliderStaleCount <= self.sliderSTALECOUNTMAX:
+        self.sliderStaleCount = self.sliderStaleCount + 1
+      self.sliderPrev = self.slider
+      def exponential_fn(x, n=95.):
+        return (n ** x - 1.) / (n - 1.)
       if self.slider > 0:
-        actuators.accel = float(self.slider) / 127. * CarControllerParams.ACCEL_MAX
+        accel_norm = float(self.slider) / 127.
+        accel_norm = exponential_fn(accel_norm)
+        actuators.accel = accel_norm * CarControllerParams.ACCEL_MAX
         actuators.accel = clip(actuators.accel, 0., CarControllerParams.ACCEL_MAX)
         self.LoC.reset(v_pid=CS.vEgo)
       elif self.slider < 0:
-        actuators.accel = float(self.slider) / 128. * -1 * CarControllerParams.ACCEL_MIN
+        accel_norm = -1. * float(self.slider) / 128.
+        accel_norm = exponential_fn(accel_norm)
+        actuators.accel = accel_norm * CarControllerParams.ACCEL_MIN
         actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, 0)
         self.LoC.reset(v_pid=CS.vEgo)
+      elif self.slider == 0 and self.sliderStaleCount < self.sliderSTALECOUNTMAX:
+        actuators.accel = 0.
+        self.LoC.reset(v_pid=CS.vEgo)
       else:
+        # self.slider == 0 and self.sliderStaleCount >= self.sliderSTALECOUNTMAX:
         actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
 
       # Steering PID loop and lateral MPC
