@@ -2,9 +2,11 @@
 import os
 import math
 from typing import SupportsFloat
+from selfdrive.car.toyota.values import CarControllerParams
+from cereal import car, log, messaging
 
 from cereal import car, log
-from common.numpy_fast import clip
+from common.numpy_fast import clip, interp
 from common.realtime import sec_since_boot, config_realtime_process, Priority, Ratekeeper, DT_CTRL
 from common.profiler import Profiler
 from common.params import Params, put_nonblocking
@@ -72,6 +74,13 @@ class Controls:
     if self.pm is None:
       self.pm = messaging.PubMaster(['sendcan', 'controlsState', 'carState',
                                      'carControl', 'carEvents', 'carParams'])
+    self.nsm = None
+    self.slider = 0
+    self.sliderPrev = self.slider
+    self.sliderStaleCount = 0
+    self.sliderSTALECOUNTMAX = int(0.7 / DT_CTRL)
+    if self.nsm == None:
+      self.nsm = messaging.SubMaster(["testJoystick"])
 
     self.camera_packets = ["roadCameraState", "driverCameraState", "wideRoadCameraState"]
 
@@ -92,8 +101,8 @@ class Controls:
       self.CI, self.CP = CI, CI.CP
 
     params = Params()
-    self.joystick_mode = params.get_bool("JoystickDebugMode") or (self.CP.notCar and sm is None)
-    joystick_packet = ['testJoystick'] if self.joystick_mode else []
+    self.joystick_mode = False
+    joystick_packet = []
 
     self.sm = sm
     if self.sm is None:
@@ -621,7 +630,45 @@ class Controls:
       # accel PID loop
       pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_kph * CV.KPH_TO_MS)
       t_since_plan = (self.sm.frame - self.sm.rcv_frame['longitudinalPlan']) * DT_CTRL
-      actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
+      self.slider = 0
+      if self.nsm == None:
+        pass
+      else:
+        a = self.nsm.update(0)
+        axes = self.nsm["testJoystick"].axes
+        if len(axes) > 0:
+          self.slider = clip(axes[0], -1, 1)
+
+      if self.slider != self.sliderPrev:
+        self.sliderStaleCount = 0
+      elif self.sliderStaleCount <= self.sliderSTALECOUNTMAX:
+        self.sliderStaleCount = self.sliderStaleCount + 1
+      self.sliderPrev = self.slider
+      def oexponential_fn(x, n=95.):
+        return (n ** x - 1.) / (n - 1.)
+      def exponential_fn(x):
+        a = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.51, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.9, 0.95, 1.]
+        b = [0, 0.004603353152, 0.01124102889, 0.02081203891, 0.03461268789, 0.05451214593, 0.08320561032, 0.1245793451, 0.1842370394,
+              0.2873017405, 0.4485151536, 0.480817372, 0.5901617624, 0.7419808621, 0.8249235841, 0.8787449808, 0.919959852,
+              0.946157826, 0.9660441397, 0.9797218926, 0.9925591201, 1.008196043]
+        return interp(x, a, b)
+        #return (n ** x - 1.) / (n - 1.)
+      if self.slider > 0:
+        accel_norm = exponential_fn(self.slider)
+        actuators.accel = accel_norm * CarControllerParams.ACCEL_MAX
+        actuators.accel = clip(actuators.accel, 0., CarControllerParams.ACCEL_MAX)
+        self.LoC.reset(v_pid=CS.vEgo)
+      elif self.slider < 0:
+        accel_norm = exponential_fn(self.slider * -1)
+        actuators.accel = accel_norm * CarControllerParams.ACCEL_MIN
+        actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, 0)
+        self.LoC.reset(v_pid=CS.vEgo)
+      elif self.slider == 0 and self.sliderStaleCount < self.sliderSTALECOUNTMAX:
+        actuators.accel = 0.
+        self.LoC.reset(v_pid=CS.vEgo)
+      else:
+        # self.slider == 0 and self.sliderStaleCount >= self.sliderSTALECOUNTMAX:
+        actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
 
       # Steering PID loop and lateral MPC
       self.desired_curvature, self.desired_curvature_rate = get_lag_adjusted_curvature(self.CP, CS.vEgo,
