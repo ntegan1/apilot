@@ -42,7 +42,7 @@ var joy = new JoyStick('joyDiv');
 var axes = new Float32Array([0.0, 0.0]);
 setInterval(function(){
   var x = -joy.GetX()/100;
-  var y = joy.GetY()/100 / 2.3;
+  var y = joy.GetY()/100 / 1.5;
   if (x === 0 && y === 0 && gamepad !== null) {
     let gamepadstate = navigator.getGamepads()[gamepad.index];
     x = -gamepadstate.axes[0];
