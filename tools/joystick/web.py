@@ -17,7 +17,7 @@ pm = messaging.PubMaster(['testJoystick'])
 index = """
 <html>
 <head>
-<script src="https://github.com/bobboteck/JoyStick/releases/download/v1.1.6/joy.min.js"></script>
+<script src="/joy.min.js"></script>
 </head>
 <body>
 <div id="joyDiv" style="width:100%;height:100%"></div>
@@ -58,6 +58,10 @@ setInterval(function(){
 @app.route("/")
 def hello_world():
   return index
+
+@app.route("/joy.min.js")
+def joy_min_js():
+  return open("/data/openpilot/tools/joystick/joy.min.js").read()
 
 last_send_time = time.monotonic()
 ws_print_every_xth_message = 8
