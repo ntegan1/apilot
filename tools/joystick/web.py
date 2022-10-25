@@ -6,6 +6,7 @@ import threading
 import ssl
 KEYDIR = "/data/openpilot/tools/joystick/keys"
 from flask import Flask
+from flask import send_file
 from struct import unpack
 sslctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 sslcert = f"{KEYDIR}/server.cert.pem"
@@ -72,7 +73,7 @@ def joy_min_js():
 
 @app.route("/cert.pem")
 def get_cert():
-  return open(sslcert).read()
+  return send_file(sslcert, as_attachment=True)
 
 last_send_time = time.monotonic()
 ws_print_every_xth_message = 8
