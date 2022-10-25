@@ -3,8 +3,15 @@ import asyncio
 import sys
 import time
 import threading
+import ssl
+KEYDIR = "/data/openpilot/tools/joystick/keys"
 from flask import Flask
 from struct import unpack
+sslctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+sslcert = f"{KEYDIR}/server.cert.pem"
+sslkey = f"{KEYDIR}/server.key.pem"
+sslctx.load_cert_chain(sslcert, sslkey)
+sslctx.check_hostname = False
 
 sys.path.append('/data/openpilot/third_party/websockets/src')
 from websockets import serve
@@ -63,6 +70,10 @@ def hello_world():
 def joy_min_js():
   return open("/data/openpilot/tools/joystick/joy.min.js").read()
 
+@app.route("/cert.pem")
+def get_cert():
+  return open(sslcert).read()
+
 last_send_time = time.monotonic()
 ws_print_every_xth_message = 8
 ws_print_counter = 0
@@ -96,7 +107,7 @@ async def handle_message(ws):
       ws_print_counter += 1
 
 async def maine():
-  async with serve(handle_message, "0.0.0.0", 5001):
+  async with serve(handle_message, "0.0.0.0", 5001, ssl=sslctx):
     await asyncio.Future() # run forever
 def websocket_thread():
   asyncio.run(maine())
@@ -116,6 +127,7 @@ def main():
   threading.Thread(target=handle_timeout, daemon=True).start()
   threading.Thread(target=websocket_thread, daemon=True).start()
   app.run(host="0.0.0.0", port="5000")
+  #app.run(host="0.0.0.0", port="5000", ssl_context=(f"{KEYDIR}/server.cert.pem", f"{KEYDIR}/server.key.pem"))
 
 if __name__ == '__main__':
   main()
