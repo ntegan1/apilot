@@ -15,11 +15,11 @@ PEDAL_TRANSITION = 10. * CV.MPH_TO_MS
 
 
 class CarControllerParams:
-  ACCEL_MAX = 1.5  # m/s2, lower than allowed 2.0 m/s2 for tuning reasons
-  ACCEL_MIN = -3.5  # m/s2
+  ACCEL_MAX = 2.0  # m/s2, lower than allowed 2.0 m/s2 for tuning reasons
+  ACCEL_MIN = -4.0  # m/s2
 
   STEER_MAX = 1500
-  STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
+  STEER_ERROR_MAX = 470     # max delta between torque cmd and torque motor
 
   def __init__(self, CP):
     if CP.lateralTuning.which == 'torque':
