@@ -22,9 +22,8 @@ static_assert(sizeof(NavModelOutputXY) == sizeof(float)*2);
 struct NavModelOutputPlan {
   std::array<NavModelOutputXY, TRAJECTORY_SIZE> mean;
   std::array<NavModelOutputXY, TRAJECTORY_SIZE> std;
-  float prob;
 };
-static_assert(sizeof(NavModelOutputPlan) == sizeof(NavModelOutputXY)*TRAJECTORY_SIZE*2 + sizeof(float));
+static_assert(sizeof(NavModelOutputPlan) == sizeof(NavModelOutputXY)*TRAJECTORY_SIZE*2);
 
 struct NavModelOutputDesirePrediction {
   std::array<float, NAV_DESIRE_LEN> values;
