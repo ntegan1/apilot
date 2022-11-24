@@ -143,7 +143,7 @@ void MapRenderer::sendVipc() {
   memset(dst, 128, buf->len);
   for (int r = 0; r < HEIGHT/2; r++) {
     for (int c = 0; c < WIDTH/2; c++) {
-      dst[r*WIDTH/2 + c] = src[(r*2*WIDTH + c*2) * 3];
+      dst[r*WIDTH/2 + c] = src[((HEIGHT/4 + r)*WIDTH + (c+WIDTH/4)) * 3];
     }
   }
 
