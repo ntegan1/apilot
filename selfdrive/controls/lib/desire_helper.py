@@ -17,13 +17,13 @@ DESIRES = {
   },
   LaneChangeDirection.left: {
     LaneChangeState.off: log.LateralPlan.Desire.none,
-    LaneChangeState.preLaneChange: log.LateralPlan.Desire.turnLeft,
+    LaneChangeState.preLaneChange: log.LateralPlan.Desire.laneChangeLeft,
     LaneChangeState.laneChangeStarting: log.LateralPlan.Desire.turnLeft,
     LaneChangeState.laneChangeFinishing: log.LateralPlan.Desire.turnLeft,
   },
   LaneChangeDirection.right: {
     LaneChangeState.off: log.LateralPlan.Desire.none,
-    LaneChangeState.preLaneChange: log.LateralPlan.Desire.turnRight,
+    LaneChangeState.preLaneChange: log.LateralPlan.Desire.laneChangeRight,
     LaneChangeState.laneChangeStarting: log.LateralPlan.Desire.turnRight,
     LaneChangeState.laneChangeFinishing: log.LateralPlan.Desire.turnRight,
   },
@@ -60,7 +60,9 @@ class DesireHelper:
         self.lane_change_direction = LaneChangeDirection.left if \
           carstate.leftBlinker else LaneChangeDirection.right
 
-        torque_applied = True
+        torque_applied = carstate.steeringPressed and \
+                         ((carstate.steeringTorque > 0 and self.lane_change_direction == LaneChangeDirection.left) or
+                          (carstate.steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.right))
         blindspot_detected = ((carstate.leftBlindspot and self.lane_change_direction == LaneChangeDirection.left) or
                               (carstate.rightBlindspot and self.lane_change_direction == LaneChangeDirection.right))
 
