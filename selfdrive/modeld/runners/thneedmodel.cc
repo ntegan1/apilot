@@ -55,10 +55,10 @@ void ThneedModel::execute() {
   if (!recorded) {
     thneed->record = true;
     if (use_extra) {
-      float *inputs[7] = {recurrent, trafficConvention, drivingStyle, navFeatures, desire, extra, input};
+      float *inputs[7] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, extra, input};
       thneed->copy_inputs(inputs);
     } else {
-      float *inputs[6] = {recurrent, trafficConvention, drivingStyle, navFeatures, desire, input};
+      float *inputs[6] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, input};
       thneed->copy_inputs(inputs);
     }
     thneed->clexec();
@@ -68,10 +68,10 @@ void ThneedModel::execute() {
     recorded = true;
   } else {
     if (use_extra) {
-      float *inputs[6] = {recurrent, trafficConvention, drivingStyle, navFeatures, desire, extra, input};
+      float *inputs[6] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, extra, input};
       thneed->execute(inputs, output);
     } else {
-      float *inputs[5] = {recurrent, trafficConvention, drivingStyle, navFeatures, desire, input};
+      float *inputs[5] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, input};
       thneed->execute(inputs, output);
     }
   }

@@ -48,17 +48,18 @@ void model_init(ModelState* s, cl_device_id device_id, cl_context context) {
   s->m->addDesire(s->pulse_desire, DESIRE_LEN*(HISTORY_BUFFER_LEN+1));
 #endif
 
+#ifdef TRAFFIC_CONVENTION
+  s->m->addTrafficConvention(s->traffic_convention, TRAFFIC_CONVENTION_LEN);
+#endif
+
+#ifdef DRIVING_STYLE
+  s->m->addDrivingStyle(s->driving_style, DRIVING_STYLE_LEN);
+#endif
+
 #ifdef NAV
   s->m->addNavFeatures(s->nav_features, NAV_FEATURE_LEN);
 #endif
 
-#ifdef DRIVING_STYLE
-  s->m->addDrivingStyle(s->nav_features, NAV_FEATURE_LEN);
-#endif
-
-#ifdef TRAFFIC_CONVENTION
-  s->m->addTrafficConvention(s->traffic_convention, TRAFFIC_CONVENTION_LEN);
-#endif
 }
 
 ModelOutput* model_eval_frame(ModelState* s, VisionBuf* buf, VisionBuf* wbuf,

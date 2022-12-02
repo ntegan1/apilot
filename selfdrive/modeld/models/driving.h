@@ -259,14 +259,14 @@ struct ModelState {
   float prev_desire[DESIRE_LEN] = {};
   float pulse_desire[DESIRE_LEN*(HISTORY_BUFFER_LEN+1)] = {};
 #endif
-#ifdef NAV
-  float nav_features[NAV_FEATURE_LEN] = {};
-#endif
 #ifdef TRAFFIC_CONVENTION
   float traffic_convention[TRAFFIC_CONVENTION_LEN] = {};
 #endif
 #ifdef DRIVING_STYLE
   float driving_style[DRIVING_STYLE_LEN] = {};
+#endif
+#ifdef NAV
+  float nav_features[NAV_FEATURE_LEN] = {};
 #endif
 };
 
