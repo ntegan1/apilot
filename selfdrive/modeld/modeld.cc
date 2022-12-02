@@ -160,7 +160,7 @@ void run_model(ModelState &model, VisionIpcClient &vipc_client_main, VisionIpcCl
     }
 
     double mt1 = millis_since_boot();
-    ModelOutput *model_output = model_eval_frame(&model, buf_main, buf_extra, model_transform_main, model_transform_extra, vec_desire, driving_style, nav_features, is_rhd, prepare_only);
+    ModelOutput *model_output = model_eval_frame(&model, buf_main, buf_extra, model_transform_main, model_transform_extra, vec_desire, is_rhd, driving_style, nav_features, prepare_only);
     double mt2 = millis_since_boot();
     float model_execution_time = (mt2 - mt1) / 1000.0;
 
