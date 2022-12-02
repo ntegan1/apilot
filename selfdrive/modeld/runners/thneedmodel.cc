@@ -68,10 +68,10 @@ void ThneedModel::execute() {
     recorded = true;
   } else {
     if (use_extra) {
-      float *inputs[6] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, extra, input};
+      float *inputs[7] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, extra, input};
       thneed->execute(inputs, output);
     } else {
-      float *inputs[5] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, input};
+      float *inputs[6] = {recurrent, navFeatures, drivingStyle, trafficConvention, desire, input};
       thneed->execute(inputs, output);
     }
   }
