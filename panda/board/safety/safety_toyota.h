@@ -1,3 +1,28 @@
+#define LIMS(tq_err_max, rate_up, rate_down) {\
+  .max_steer = 1500, \
+  .max_rt_delta = tq_err_max * 3 / 2, \
+  .max_rt_interval = 250000, \
+  .max_torque_error = tq_err_max, \
+  .max_rate_up = rate_up, \
+  .max_rate_down = rate_down, \
+  .type = TorqueMotorLimited, \
+  .min_valid_request_frames = 18, \
+  .max_invalid_request_frames = 1, \
+  .min_valid_request_rt_interval = 170000, \
+  .has_steer_req_tolerance = true, \
+}
+
+typedef struct {
+  float vEgo; // m/s
+  SteeringLimits limits;
+} SteeringLimitBreakpoint;
+
+const SteeringLimitBreakpoint steering_breakpoints[] = {
+  // vEgo (m/s), LIMS - (max_tq_err, rate up, rate down)
+  //{.vEgo = 6.5, .limits = LIMS(384, 2, 3)},
+  {.vEgo = 11.0f, .limits = LIMS(2100, 21, 34)},
+  {.vEgo = 13.0f, .limits = LIMS(350, 15, 25)},
+};
 const SteeringLimits TOYOTA_STEERING_LIMITS = {
   .max_steer = 1500,
   .max_rate_up = 15,          // ramp up slow
@@ -49,6 +74,7 @@ const uint32_t TOYOTA_EPS_FACTOR = (1U << TOYOTA_PARAM_OFFSET) - 1U;
 const uint32_t TOYOTA_PARAM_ALT_BRAKE = 1U << TOYOTA_PARAM_OFFSET;
 const uint32_t TOYOTA_PARAM_STOCK_LONGITUDINAL = 2U << TOYOTA_PARAM_OFFSET;
 
+float toyota_vego = 0.;
 bool toyota_alt_brake = false;
 bool toyota_stock_longitudinal = false;
 int toyota_dbc_eps_torque_factor = 100;   // conversion factor for STEER_TORQUE_EPS in %: see dbc file
@@ -105,7 +131,22 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
       }
     }
 
+
+
+    const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
     if (addr == 0xaa) {
+      int speed = 0; // kph * 100
+      // sum 4 wheel speeds
+      for (uint8_t i=0U; i<8U; i+=2U) {
+        int wheel_speed = (GET_BYTE(to_push, i) << 8U) + GET_BYTE(to_push, (i+1U));
+        speed += wheel_speed - 0x1a6f;
+      }
+      // 1 kph = 0.278 m/s
+      toyota_vego = ((float)speed / 4.f / 100.f) * 0.278f;
+      // TODO who is this conversion
+      //hyundai_vego = ((float)speed / 4.f) * 0.277778f * 0.03125f;
+      //vehicle_moving = ABS(speed / 4) > TOYOTA_STANDSTILL_THRSLD;
+
       // check that all wheel speeds are at zero value with offset
       bool standstill = (GET_BYTES_04(to_push) == 0x6F1A6F1AU) && (GET_BYTES_48(to_push) == 0x6F1A6F1AU);
       vehicle_moving = !standstill;
@@ -205,7 +246,16 @@ static int toyota_tx_hook(CANPacket_t *to_send) {
       int desired_torque = (GET_BYTE(to_send, 1) << 8) | GET_BYTE(to_send, 2);
       desired_torque = to_signed(desired_torque, 16);
       bool steer_req = GET_BIT(to_send, 0U) != 0U;
-      if (steer_torque_cmd_checks(desired_torque, steer_req, TOYOTA_STEERING_LIMITS)) {
+      // get max torque allowed
+      const int num_breakpoints = (sizeof(steering_breakpoints) / sizeof(steering_breakpoints[0]));
+      int idx = num_breakpoints - 1;
+      for (int i = 0; i < num_breakpoints; i++) {
+        if (toyota_vego < steering_breakpoints[i].vEgo) {
+          idx = i;
+          break;
+        }
+      }
+      if (steer_torque_cmd_checks(desired_torque, steer_req, steering_breakpoints[idx].limits)) {
         tx = 0;
       }
     }
