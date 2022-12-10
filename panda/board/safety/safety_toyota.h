@@ -133,7 +133,7 @@ static int toyota_rx_hook(CANPacket_t *to_push) {
 
 
 
-    const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
+    //const int TOYOTA_STANDSTILL_THRSLD = 100;  // 1kph
     if (addr == 0xaa) {
       int speed = 0; // kph * 100
       // sum 4 wheel speeds
