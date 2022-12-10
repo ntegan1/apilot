@@ -23,22 +23,6 @@ const SteeringLimitBreakpoint steering_breakpoints[] = {
   {.vEgo = 11.0f, .limits = LIMS(2100, 21, 34)},
   {.vEgo = 13.0f, .limits = LIMS(350, 15, 25)},
 };
-const SteeringLimits TOYOTA_STEERING_LIMITS = {
-  .max_steer = 1500,
-  .max_rate_up = 15,          // ramp up slow
-  .max_rate_down = 25,        // ramp down fast
-  .max_torque_error = 350,    // max torque cmd in excess of motor torque
-  .max_rt_delta = 450,        // the real time limit is 1800/sec, a 20% buffer
-  .max_rt_interval = 250000,
-  .type = TorqueMotorLimited,
-
-  // the EPS faults when the steering angle rate is above a certain threshold for too long. to prevent this,
-  // we allow setting STEER_REQUEST bit to 0 while maintaining the requested torque value for a single frame
-  .min_valid_request_frames = 18,
-  .max_invalid_request_frames = 1,
-  .min_valid_request_rt_interval = 170000,  // 170ms; a ~10% buffer on cutting every 19 frames
-  .has_steer_req_tolerance = true,
-};
 
 // longitudinal limits
 const LongitudinalLimits TOYOTA_LONG_LIMITS = {

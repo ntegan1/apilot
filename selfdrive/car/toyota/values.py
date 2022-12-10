@@ -19,12 +19,24 @@ class CarControllerParams:
   ACCEL_MIN = -3.5  # m/s2
 
   STEER_MAX = 1500
-  STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
 
-  def __init__(self, CP):
+  def __init__(self, CP, vEgoRaw):
+    self.STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
+    breakpoints = [
+      #{.vEgo = 11.0f, .limits = LIMS(2100, 21, 34)},
+      #{.vEgo = 13.0f, .limits = LIMS(350, 15, 25)},
+      (11., 2100, 21, 34),
+      (13., 350, 15, 25),
+    ]
+    idx = len(breakpoints) - 1
+    for i, x in enumerate(breakpoints):
+      if vEgoRaw < x[0]:
+        idx = i
+        break
     if CP.lateralTuning.which == 'torque':
-      self.STEER_DELTA_UP = 15       # 1.0s time to peak torque
-      self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
+      self.STEER_DELTA_UP = breakpoints[idx][2]
+      self.STEER_DELTA_DOWN = breakpoints[idx][3]
+      self.STEER_ERROR_MAX = breakpoints[idx][1]
     else:
       self.STEER_DELTA_UP = 10       # 1.5s time to peak torque
       self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)

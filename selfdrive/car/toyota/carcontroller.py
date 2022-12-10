@@ -22,7 +22,7 @@ MAX_USER_TORQUE = 500
 class CarController:
   def __init__(self, dbc_name, CP, VM):
     self.CP = CP
-    self.torque_rate_limits = CarControllerParams(self.CP)
+    self.torque_rate_limits = CarControllerParams(self.CP, 0)
     self.frame = 0
     self.last_steer = 0
     self.alert_active = False
@@ -35,6 +35,7 @@ class CarController:
     self.accel = 0
 
   def update(self, CC, CS):
+    self.torque_rate_limits = CarControllerParams(self.CP, CS.out.vEgoRaw)
     actuators = CC.actuators
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
