@@ -1,0 +1,102 @@
+diff --git a/panda b/panda
+index 4edd1a602131e..d23b06fa0817a 160000
+--- a/panda
++++ b/panda
+@@ -1 +1 @@
+-Subproject commit 4edd1a602131ec2f09a604a4bd28e7d00e334458
++Subproject commit d23b06fa0817afb57202e42ce1c1df7bfd1c6ba6
+diff --git a/selfdrive/car/hyundai/carcontroller.py b/selfdrive/car/hyundai/carcontroller.py
+index 3f128b15983d3..fc87bab587641 100644
+--- a/selfdrive/car/hyundai/carcontroller.py
++++ b/selfdrive/car/hyundai/carcontroller.py
+@@ -44,7 +44,7 @@ def process_hud_alert(enabled, fingerprint, hud_control):
+ class CarController:
+   def __init__(self, dbc_name, CP, VM):
+     self.CP = CP
+-    self.params = CarControllerParams(CP)
++    self.params = CarControllerParams(CP, 0)
+     self.packer = CANPacker(dbc_name)
+     self.angle_limit_counter = 0
+     self.frame = 0
+@@ -58,10 +58,16 @@ def update(self, CC, CS):
+     actuators = CC.actuators
+     hud_control = CC.hudControl
+ 
++    self.params = CarControllerParams(self.CP, CS.out.vEgoRaw)
++    #self.params = CarControllerParams(self.CP, 100)
++
+     # steering torque
+     steer = actuators.steer
++
+     new_steer = int(round(steer * self.params.STEER_MAX))
+     apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.params)
++    apply_steer = clip(apply_steer, -self.params.STEER_MAX, self.params.STEER_MAX)
++    print("apply", apply_steer)
+ 
+     if not CC.latActive:
+       apply_steer = 0
+@@ -187,6 +193,9 @@ def update(self, CC, CS):
+     new_actuators = actuators.copy()
+     new_actuators.steer = apply_steer / self.params.STEER_MAX
+     new_actuators.accel = accel
++    new_actuators.gas = self.params.STEER_MAX
++    new_actuators.brake = self.params.STEER_DELTA_UP
++    new_actuators.speed = self.params.STEER_DELTA_DOWN
+ 
+     self.frame += 1
+     return new_actuators, can_sends
+diff --git a/selfdrive/car/hyundai/carstate.py b/selfdrive/car/hyundai/carstate.py
+index bd6b72f4611cf..17ffb8e67fa04 100644
+--- a/selfdrive/car/hyundai/carstate.py
++++ b/selfdrive/car/hyundai/carstate.py
+@@ -41,7 +41,7 @@ def __init__(self, CP):
+     self.cluster_speed = 0
+     self.cluster_speed_counter = CLUSTER_SAMPLE_RATE
+ 
+-    self.params = CarControllerParams(CP)
++    self.params = CarControllerParams(CP, 0)
+ 
+   def update(self, cp, cp_cam):
+     if self.CP.carFingerprint in CANFD_CAR:
+diff --git a/selfdrive/car/hyundai/values.py b/selfdrive/car/hyundai/values.py
+index 1e9d0f7f62ef9..296ad21eafcfe 100644
+--- a/selfdrive/car/hyundai/values.py
++++ b/selfdrive/car/hyundai/values.py
+@@ -16,7 +16,7 @@ class CarControllerParams:
+   ACCEL_MIN = -3.5 # m/s
+   ACCEL_MAX = 2.0 # m/s
+ 
+-  def __init__(self, CP):
++  def __init__(self, CP, vEgoRaw):
+     self.STEER_DELTA_UP = 3
+     self.STEER_DELTA_DOWN = 7
+     self.STEER_DRIVER_ALLOWANCE = 50
+@@ -25,12 +25,24 @@ def __init__(self, CP):
+     self.STEER_THRESHOLD = 150
+ 
+     if CP.carFingerprint in CANFD_CAR:
+-      self.STEER_MAX = 270
+-      self.STEER_DRIVER_ALLOWANCE = 250
++      self.STEER_DRIVER_ALLOWANCE = 175
+       self.STEER_DRIVER_MULTIPLIER = 2
+       self.STEER_THRESHOLD = 250
+-      self.STEER_DELTA_UP = 2
+-      self.STEER_DELTA_DOWN = 3
++
++      breakpoints = [
++        # vEgo, max torque, rate up, rate down
++        (11., 384, 10, 10),  # 10 seems to be the max before faulting
++        (13., 270, 2, 3),
++      ]
++      idx = len(breakpoints) - 1
++      for i, x in enumerate(breakpoints):
++        if vEgoRaw < x[0]:
++          idx = i
++          break
++      self.STEER_MAX = breakpoints[idx][1]
++      self.STEER_DELTA_UP = breakpoints[idx][2]
++      self.STEER_DELTA_DOWN = breakpoints[idx][3]
++      print(idx, breakpoints[idx], vEgoRaw)
+ 
+     # To determine the limit for your car, find the maximum value that the stock LKAS will request.
+     # If the max stock LKAS request is <384, add your car to this list.

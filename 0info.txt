@@ -1,0 +1,19 @@
+# porting comma taco branch hyundai specific stuff to toyota
+https://github.com/ntegan1/openpilot/tree/master-old10
+
+taco branch is based on ev6-speed-bp branch
+
+Starting with ev6 torque breakpoints.  
+* Increasing toyota steer_error_max at low speeds
+* Increasing toyota steer_delta at low speeds
+  * need to find max delta up/down for tssp corolla
+
+Then doing taco branch specific stuff.  
+* torque control changes
+* steer rate changes
+
+
+## branch ev6-speed-bp
+op and panda patches in 1patches/ directory
+## branch taco
+TODO after
