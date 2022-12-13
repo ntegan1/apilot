@@ -36,6 +36,12 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
       "../assets/offroad/icon_openpilot.png",
     },
     {
+      "SetSpeedApp",
+      tr("Enable Set Speed App"),
+      tr("Start the set speed app server"),
+      "../assets/offroad/react.png",
+    },
+    {
       "ExperimentalMode",
       tr("Experimental Mode"),
       "",
