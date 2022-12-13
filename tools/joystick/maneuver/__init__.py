@@ -27,9 +27,13 @@ class ManeuverController:
   start_time = None
   def update(self, vcruise):
     should_start_maneuver = not self.maneuvering and self.mem.maneuver_requested()
-    should_stop_maneuver = self.maneuvering and not self.mem.maneuver_requested()
     if not self.maneuvering and not should_start_maneuver:
       return vcruise
+
+    # TODO this is wrong. this function decides when to stop
+    #should_stop_maneuver = self.maneuvering and not self.mem.maneuver_requested()
+
+    should_stop_maneuver = self.maneuvering && self.t > self.maneuver.duration
 
     if should_start_maneuver:
       self.t = 0.
@@ -42,6 +46,8 @@ class ManeuverController:
       self.maneuver = None
       self.t = 0.
       self.start_time = None
+      self.mem.maneuver_finish()
+      return vcruise
       # TODO
       # do/finish this and see what else i missed and put it into the car
       # start over ssh for now
@@ -90,6 +96,7 @@ class Maneuver:
   def __init__(self, file_name):
     self.file_name = file_name
     self.object = json.load(open(maneuvers_directory + "/" + file_name))
+    self.duration = float(self.object["duration"])
     self.should_interpolate = bool(self.object["should_interpolate"])
     self.__points_to_interpables()
 
