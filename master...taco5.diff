@@ -117,35 +117,6 @@ index b2955ad2c5048..213f5091eb362 100644
  constexpr int NAV_INPUT_SIZE = 256*256;
  constexpr int NAV_FEATURE_LEN = 64;
  constexpr int NAV_DESIRE_LEN = 32;
-diff --git a/selfdrive/modeld/models/navmodel.onnx b/selfdrive/modeld/models/navmodel.onnx
-index 397b8d90e2f64..53089836d3cdb 100644
---- a/selfdrive/modeld/models/navmodel.onnx
-+++ b/selfdrive/modeld/models/navmodel.onnx
-@@ -1,3 +1,3 @@
- version https://git-lfs.github.com/spec/v1
--oid sha256:9028b36a591763724e95205b48f37f09260b4434fb1f3c6f228db1710a401aa8
--size 12258591
-+oid sha256:f851f19b0a9e2299639f18856e4879ee863918227b7cef6a07eb6b94a273a9aa
-+size 12259173
-diff --git a/selfdrive/modeld/models/navmodel_q.dlc b/selfdrive/modeld/models/navmodel_q.dlc
-index 984cf0a553014..8e86d2272a1f4 100644
---- a/selfdrive/modeld/models/navmodel_q.dlc
-+++ b/selfdrive/modeld/models/navmodel_q.dlc
-@@ -1,3 +1,3 @@
- version https://git-lfs.github.com/spec/v1
--oid sha256:bc7ade56bb4f9525c84a46df22252ea1e321a0518cbcef8bdfc76ccd8ad10b41
-+oid sha256:e1c1b277821086fc61b16cb6b68ec3d950d9c2c6ad78f2aa13be88a3a6fa041c
- size 3154304
-diff --git a/selfdrive/modeld/models/supercombo.onnx b/selfdrive/modeld/models/supercombo.onnx
-index 8805b3dce8d5c..d6da9a6da5f75 100644
---- a/selfdrive/modeld/models/supercombo.onnx
-+++ b/selfdrive/modeld/models/supercombo.onnx
-@@ -1,3 +1,3 @@
- version https://git-lfs.github.com/spec/v1
--oid sha256:db746e3753de84367595fedd089c2bd41b06bd401ea28e085663533d0e63d74b
--size 45962473
-+oid sha256:f794d65ddfb3600e0b3f7d7e894d1dd278b88569de863aae41246eec43f035cf
-+size 46040391
 diff --git a/selfdrive/modeld/runners/thneedmodel.cc b/selfdrive/modeld/runners/thneedmodel.cc
 index 4fdd7ca466f08..61c888cb62b4f 100644
 --- a/selfdrive/modeld/runners/thneedmodel.cc
