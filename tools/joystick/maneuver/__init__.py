@@ -90,6 +90,7 @@ class Maneuver:
     conversion = conversions[unit]
     for point in self.object["points"]:
       times.append(float(point[0]))
+      # TODO calculate accels as slopes of speedss
       speeds_kph.append(float(point[1]) * conversion)
     self.times = times
     self.speeds = speeds_kph
