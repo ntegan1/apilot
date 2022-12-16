@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 import os
 import subprocess
+import tempfile
 
 from flask import Flask, Response, request
 from selfdrive.loggerd.config import ROOT
 from selfdrive.loggerd.uploader import listdir_by_creation
 from tools.lib.route import SegmentName
+
+chunk_size = 1024 * 512
 
 def is_valid_segment(segment):
   try:
@@ -39,6 +42,19 @@ def segments_in_route(route):
   segments = [segment_name.time_str + "--" + str(segment_name.segment_num) for segment_name in segment_names]
   return segments
 
+def ffmpeg_process(segment, cameratype, directory):
+  command = ["ffmpeg",
+      "-r", "20",
+      "-i", ROOT + "/" + segment + "/qcamera.ts",
+      "-c", "copy",
+      "-map", "0",
+      directory + "/" + "a.mp4",
+    ]
+  return subprocess.Popen(
+    command,
+    bufsize=chunk_size,
+  )
+
 app = Flask(__name__,)
 
 @app.route("/<cameratype>/<segment>")
@@ -56,22 +72,19 @@ def fcamera(cameratype, segment):
         "-map", "0",
         "-vtag", "hvc1",
         "-f", "mp4",
-        "-movflags", "empty_moov",
         "-",
       ], stdout=subprocess.PIPE
     )
   elif cameratype in ['qcamera']:
-    proc = subprocess.Popen(
-      ["ffmpeg",
-        "-r", "20",
-        "-i", ROOT + "/" + segment + "/qcamera.ts",
-        "-c", "copy",
-        "-map", "0",
-        "-f", "mp4",
-        "-movflags", "empty_moov",
-        "-",
-      ], stdout=subprocess.PIPE
-    )
+    def generate():
+      with tempfile.TemporaryDirectory() as d:
+        p = ffmpeg_process(segment, "qcamera", d)
+        p.wait()
+        with open(d + "/a.mp4", "rb") as f:
+          for chunk in iter(lambda: f.read(chunk_size), b""):
+            yield chunk
+        
+    return Response(generate(), status=200, mimetype='video/mp4')
   else:
     return "invalid camera type"
   return Response(proc.stdout.read(), status=200, mimetype='video/mp4')
@@ -101,6 +114,8 @@ def route(route):
     current segment: <span id="currentsegment"></span>
     <br>
     current view: <span id="currentview"></span>
+    <br>
+    <a download=\""""+route+"-"+ query_type + ".mp4" + """\" href=\"/full/"""+query_type+"""/"""+route+"""\">download full route video</a> -
     <br><br>
     <a href="\\">back to routes</a>
     <br><br>
