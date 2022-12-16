@@ -87,23 +87,23 @@ def full(cameratype, route):
     def a(s):
       return ROOT + "/" + s + "/" + cameratype + ".hevc"
     vidlist = "|".join(a(s) for s in vidlist)
-    proc = subprocess.Popen(
-      ["ffmpeg",
-        "-f", "hevc",
-        "-r", "20",
-        "-i", "concat:" + vidlist,
-        "-c", "copy",
-        "-map", "0",
-        "-vtag", "hvc1",
-        "-f", "mp4",
-        "-movflags", "empty_moov",
-        "-",
-      ], stdout=subprocess.PIPE,
-      bufsize=chunk_size, text=False
-    )
     def generate():
-      for chunk in iter(lambda: proc.stdout.read(chunk_size), b""):
-        yield bytes(chunk)
+      with subprocess.Popen(
+        ["ffmpeg",
+          "-f", "hevc",
+          "-r", "20",
+          "-i", "concat:" + vidlist,
+          "-c", "copy",
+          "-map", "0",
+          "-vtag", "hvc1",
+          "-f", "mp4",
+          "-movflags", "empty_moov",
+          "-",
+        ], stdout=subprocess.PIPE,
+        bufsize=chunk_size, text=False
+      ) as f:
+        for chunk in iter(lambda: f.stdout.read(chunk_size), b""):
+          yield bytes(chunk)
     return Response(generate(), status=200, mimetype='video/mp4')
   elif cameratype in ['qcamera']:
     return Response("q", status=200, mimetype='video/mp4')
