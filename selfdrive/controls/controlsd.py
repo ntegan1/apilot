@@ -592,6 +592,9 @@ class Controls:
     if not CC.longActive:
       self.LoC.reset(v_pid=CS.vEgo)
 
+    # TODO if beginning override, reset LoC here
+    # or maybe also if changing speeds
+    # see how that works before adding a_target to pid
     if not self.joystick_mode:
       # accel PID loop
       pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_helper.v_cruise_kph * CV.KPH_TO_MS)
