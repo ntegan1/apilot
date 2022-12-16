@@ -78,6 +78,9 @@ def fcamera(cameratype, segment):
 
 @app.route("/full/<cameratype>/<route>")
 def full(cameratype, route):
+  chunk_size = 4096 # 4k
+  chunk_size = 1024 * 1024 * 64 # 64mb
+  chunk_size = 1024 * 1024 * 1 # 64mb
   # TODO is valid route
   if cameratype in ['fcamera', 'dcamera', 'ecamera']:
     vidlist = segments_in_route(route)
@@ -95,9 +98,13 @@ def full(cameratype, route):
         "-f", "mp4",
         "-movflags", "empty_moov",
         "-",
-      ], stdout=subprocess.PIPE
+      ], stdout=subprocess.PIPE,
+      bufsize=chunk_size, text=False
     )
-    return Response(proc.stdout.read(), status=200, mimetype='video/mp4')
+    def generate():
+      for chunk in iter(lambda: proc.stdout.read(chunk_size), b""):
+        yield bytes(chunk)
+    return Response(generate(), status=200, mimetype='video/mp4')
   elif cameratype in ['qcamera']:
     return Response("q", status=200, mimetype='video/mp4')
   else:
