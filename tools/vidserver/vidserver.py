@@ -76,6 +76,34 @@ def fcamera(cameratype, segment):
     return "invalid camera type"
   return Response(proc.stdout.read(), status=200, mimetype='video/mp4')
 
+@app.route("/full/<cameratype>/<route>")
+def full(cameratype, route):
+  # TODO is valid route
+  if cameratype in ['fcamera', 'dcamera', 'ecamera']:
+    vidlist = segments_in_route(route)
+    def a(s):
+      return ROOT + "/" + s + "/" + cameratype + ".hevc"
+    vidlist = "|".join(a(s) for s in vidlist)
+    proc = subprocess.Popen(
+      ["ffmpeg",
+        "-f", "hevc",
+        "-r", "20",
+        "-i", "concat:" + vidlist,
+        "-c", "copy",
+        "-map", "0",
+        "-vtag", "hvc1",
+        "-f", "mp4",
+        "-movflags", "empty_moov",
+        "-",
+      ], stdout=subprocess.PIPE
+    )
+    return Response(proc.stdout.read(), status=200, mimetype='video/mp4')
+  elif cameratype in ['qcamera']:
+    return Response("q", status=200, mimetype='video/mp4')
+  else:
+    return "invalid camera type"
+
+
 @app.route("/<route>")
 def route(route):
   if len(route) != 20:
@@ -101,6 +129,8 @@ def route(route):
     current segment: <span id="currentsegment"></span>
     <br>
     current view: <span id="currentview"></span>
+    <br>
+    <a download=\""""+route+"-"+ query_type + ".mp4" + """\" href=\"/full/"""+query_type+"""/"""+route+"""\">download full route video</a> -
     <br><br>
     <a href="\\">back to routes</a>
     <br><br>
