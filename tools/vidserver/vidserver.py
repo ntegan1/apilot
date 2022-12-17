@@ -41,6 +41,22 @@ def segments_in_route(route):
   segments = [segment_name.time_str + "--" + str(segment_name.segment_num) for segment_name in segment_names]
   return segments
 
+def ffmpeg_mp4_concat_wrap_process_builder(file_list, cameratype):
+  command_line = ["ffmpeg"]
+  if not cameratype == "qcamera":
+    command_line += ["-f", "hevc"]
+  command_line += ["-r", "20"]
+  command_line += ["-i", "concat:" + file_list]
+  command_line += ["-c", "copy"]
+  command_line += ["-map", "0"]
+  if not cameratype == "qcamera":
+    command_line += ["-vtag", "hvc1"]
+  command_line += ["-f", "mp4"]
+  command_line += ["-movflags", "empty_moov"]
+  command_line += ["-"]
+  return subprocess.Popen(
+    command_line, stdout=subprocess.PIPE
+  )
 def ffmpeg_mp4_wrap_process_builder(filename):
   """Returns a process that will wrap the given filename
      inside an mp4 container, for easier playback by browsers
@@ -72,6 +88,14 @@ def ffmpeg_mp4_wrap_process_builder(filename):
   )
 
 app = Flask(__name__,)
+
+@app.route("/full/<cameratype>/<route>")
+def full(cameratype, route):
+  #if not is_valid_route(route):
+  #  return "invalid route"
+  file_name = cameratype + (".ts" if cameratype == "qcamera" else ".hevc")
+  vidlist = "|".join(ROOT + "/" + segment + "/" + file_name for segment in segments_in_route(route))
+  return Response(ffmpeg_mp4_concat_wrap_process_builder(vidlist, cameratype).stdout.read(), status=200, mimetype='video/mp4')
 
 @app.route("/<cameratype>/<segment>")
 def fcamera(cameratype, segment):
@@ -106,6 +130,8 @@ def route(route):
     current segment: <span id="currentsegment"></span>
     <br>
     current view: <span id="currentview"></span>
+    <br>
+    <a download=\""""+route+"-"+ query_type + ".mp4" + """\" href=\"/full/"""+query_type+"""/"""+route+"""\">download full route video</a> -
     <br><br>
     <a href="\\">back to routes</a>
     <br><br>
