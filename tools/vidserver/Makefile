@@ -17,7 +17,7 @@ y=$(top)
 
 all:
 	#make dcampic
-	make cropoverlay
+	make cropoverlayfull
 
 routes:
 	curl 'http://127.0.0.1:8081'
@@ -29,8 +29,13 @@ dcampic:
 	$(RM) out.jpg
 cropoverlay:
 	ffmpeg \
+		-i "http://127.0.0.1:8081/ecamera/$(ROUTE)--3" \
+		-i "http://127.0.0.1:8081/dcamera/$(ROUTE)--3" \
+		-filter_complex "[1:v]crop=$(ow):$(oh):$(x):$(y)[out];[0:v][out] overlay=main_w-overlay_w-10:main_h-overlay_h-10" outoverlay.mp4
+cropoverlayfull:
+	ffmpeg \
 		-i "http://127.0.0.1:8081/full/ecamera/$(ROUTE)" \
-		-i "http://127.0.0.1:8081/full/ecamera/$(ROUTE)" \
+		-i "http://127.0.0.1:8081/full/dcamera/$(ROUTE)" \
 		-filter_complex "[1:v]crop=$(ow):$(oh):$(x):$(y)[out];[0:v][out] overlay=main_w-overlay_w-10:main_h-overlay_h-10" outoverlay.mp4
 
 
