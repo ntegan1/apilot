@@ -44,7 +44,8 @@ def segments_in_route(route):
 def ffmpeg_mp4_wrap_process(filename):
   """Returns a process that will wrap the given filename
      inside an mp4 container, for easier playback by browsers
-     and other devices
+     and other devices. Primary use case is streaming segment videos
+     to the vidserver tool.
 
      filename is expected to be a pathname to one of the following
        /path/to/a/qcamera.ts
