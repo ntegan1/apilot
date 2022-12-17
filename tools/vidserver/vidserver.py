@@ -41,7 +41,7 @@ def segments_in_route(route):
   segments = [segment_name.time_str + "--" + str(segment_name.segment_num) for segment_name in segment_names]
   return segments
 
-def ffmpeg_mp4_concat_wrap_process_builder(file_list, cameratype):
+def ffmpeg_mp4_concat_wrap_process_builder(file_list, cameratype, chunk_size=1024*512):
   command_line = ["ffmpeg"]
   if not cameratype == "qcamera":
     command_line += ["-f", "hevc"]
@@ -55,7 +55,8 @@ def ffmpeg_mp4_concat_wrap_process_builder(file_list, cameratype):
   command_line += ["-movflags", "empty_moov"]
   command_line += ["-"]
   return subprocess.Popen(
-    command_line, stdout=subprocess.PIPE
+    command_line, stdout=subprocess.PIPE,
+    bufsize=chunk_size
   )
 def ffmpeg_mp4_wrap_process_builder(filename):
   """Returns a process that will wrap the given filename
@@ -91,11 +92,16 @@ app = Flask(__name__,)
 
 @app.route("/full/<cameratype>/<route>")
 def full(cameratype, route):
+  chunk_size = 1024 * 512 # 5KiB
   #if not is_valid_route(route):
   #  return "invalid route"
   file_name = cameratype + (".ts" if cameratype == "qcamera" else ".hevc")
   vidlist = "|".join(ROOT + "/" + segment + "/" + file_name for segment in segments_in_route(route))
-  return Response(ffmpeg_mp4_concat_wrap_process_builder(vidlist, cameratype).stdout.read(), status=200, mimetype='video/mp4')
+  def generate_buffered_stream():
+    with ffmpeg_mp4_concat_wrap_process_builder(vidlist, cameratype, chunk_size) as process:
+      for chunk in iter(lambda: process.stdout.read(chunk_size), b""):
+        yield bytes(chunk)
+  return Response(generate_buffered_stream(), status=200, mimetype='video/mp4')
 
 @app.route("/<cameratype>/<segment>")
 def fcamera(cameratype, segment):
@@ -131,7 +137,7 @@ def route(route):
     <br>
     current view: <span id="currentview"></span>
     <br>
-    <a download=\""""+route+"-"+ query_type + ".mp4" + """\" href=\"/full/"""+query_type+"""/"""+route+"""\">download full route video</a> -
+    <a download=\""""+route+"-"+ query_type + ".mp4" + """\" href=\"/full/"""+query_type+"""/"""+route+"""\">download full route """ + query_type + """</a>
     <br><br>
     <a href="\\">back to routes</a>
     <br><br>
