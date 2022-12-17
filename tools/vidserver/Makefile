@@ -16,7 +16,8 @@ x=$(left)
 y=$(top)
 
 all:
-	make dcampic
+	#make dcampic
+	make cropoverlay
 
 routes:
 	curl 'http://127.0.0.1:8081'
@@ -26,4 +27,10 @@ dcampic:
 		ffmpeg -y -i - -ss 00:00:02 -filter:v "crop=$(ow):$(oh):$(x):$(y)" -frames:v 1 -q:v 2 out.jpg
 	! timeout 3 eog out.jpg
 	$(RM) out.jpg
+cropoverlay:
+	ffmpeg \
+		-i "http://127.0.0.1:8081/full/ecamera/$(ROUTE)" \
+		-i "http://127.0.0.1:8081/full/ecamera/$(ROUTE)" \
+		-filter_complex "[1:v]crop=$(ow):$(oh):$(x):$(y)[out];[0:v][out] overlay=main_w-overlay_w-10:main_h-overlay_h-10" outoverlay.mp4
+
 
