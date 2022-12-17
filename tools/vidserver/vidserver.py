@@ -41,7 +41,7 @@ def segments_in_route(route):
   segments = [segment_name.time_str + "--" + str(segment_name.segment_num) for segment_name in segment_names]
   return segments
 
-def ffmpeg_mp4_wrap_process(filename):
+def ffmpeg_mp4_wrap_process_builder(filename):
   """Returns a process that will wrap the given filename
      inside an mp4 container, for easier playback by browsers
      and other devices. Primary use case is streaming segment videos
@@ -79,7 +79,7 @@ def fcamera(cameratype, segment):
     return "invalid segment"
   file_name = ROOT + "/" + segment + "/" + cameratype + (".ts" if cameratype == "qcamera" else ".hevc")
 
-  return Response(ffmpeg_mp4_wrap_process(file_name).stdout.read(), status=200, mimetype='video/mp4')
+  return Response(ffmpeg_mp4_wrap_process_builder(file_name).stdout.read(), status=200, mimetype='video/mp4')
 
 @app.route("/<route>")
 def route(route):
