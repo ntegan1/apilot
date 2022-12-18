@@ -19,3 +19,6 @@
 [submodule "tinygrad"]
   path = tinygrad_repo
   url = https://github.com/geohot/tinygrad.git
+[submodule "optool"]
+	path = optool
+	url = https://github.com/ntegan1/optool
