@@ -13,6 +13,7 @@ from selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import T_IDXS as T_IDXS_MPC
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, CONTROL_N
 from system.swaglog import cloudlog
+from optool.setspeed.controller import Client
 
 LON_MPC_STEP = 0.2  # first step is 0.2s
 AWARENESS_DECEL = -0.2  # car smoothly decel at .2m/s^2 when user is distracted
@@ -49,6 +50,7 @@ class LongitudinalPlanner:
     self.CP = CP
     self.mpc = LongitudinalMpc()
     self.fcw = False
+    self.c = Client()
 
     self.a_desired = init_a
     self.v_desired_filter = FirstOrderFilter(init_v, 2.0, DT_MDL)
@@ -76,7 +78,8 @@ class LongitudinalPlanner:
     return x, v, a, j
 
   def update(self, sm):
-    self.mpc.mode = 'blended' if sm['controlsState'].experimentalMode else 'acc'
+    self.c.update()
+    self.mpc.mode = 'blended' if (not self.c.get_isactive()) and sm['controlsState'].experimentalMode else 'acc'
 
     v_ego = sm['carState'].vEgo
     v_cruise_kph = sm['controlsState'].vCruise

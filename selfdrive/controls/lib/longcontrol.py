@@ -4,6 +4,7 @@ from common.realtime import DT_CTRL
 from selfdrive.controls.lib.drive_helpers import CONTROL_N, apply_deadzone
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.modeld.constants import T_IDXS
+from optool.setspeed.controller import Client
 
 LongCtrlState = car.CarControl.Actuators.LongControlState
 
@@ -54,6 +55,7 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target,
 
 class LongControl:
   def __init__(self, CP):
+    self.c = Client()
     self.CP = CP
     self.long_control_state = LongCtrlState.off  # initialized to off
     self.pid = PIDController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
@@ -68,6 +70,7 @@ class LongControl:
     self.v_pid = v_pid
 
   def update(self, active, CS, long_plan, accel_limits, t_since_plan):
+    self.c.update()
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
     # Interp control trajectory
     speeds = long_plan.speeds
@@ -125,6 +128,9 @@ class LongControl:
 
       error = self.v_pid - CS.vEgo
       error_deadzone = apply_deadzone(error, deadzone)
+      
+      if self.c.get_isactive():
+        a_target = self.c.get_accel(-3.5, 1.5)
       output_accel = self.pid.update(error_deadzone, speed=CS.vEgo,
                                      feedforward=a_target,
                                      freeze_integrator=freeze_integrator)
