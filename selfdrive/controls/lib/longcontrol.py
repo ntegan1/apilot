@@ -14,6 +14,7 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target,
   # Ignore cruise standstill if car has a gas interceptor
   cruise_standstill = cruise_standstill and not CP.enableGasInterceptor
   accelerating = v_target_1sec > v_target
+  # TODO: add stuff here
   planned_stop = (v_target < CP.vEgoStopping and
                   v_target_1sec < CP.vEgoStopping and
                   not accelerating)
@@ -118,19 +119,21 @@ class LongControl:
 
     elif self.long_control_state == LongCtrlState.pid:
       self.v_pid = v_target_now
+      cactive = self.c.get_isactive()
 
       # Toyota starts braking more when it thinks you want to stop
       # Freeze the integrator so we don't accelerate to compensate, and don't allow positive acceleration
       # TODO too complex, needs to be simplified and tested on toyotas
       prevent_overshoot = not self.CP.stoppingControl and CS.vEgo < 1.5 and v_target_1sec < 0.7 and v_target_1sec < self.v_pid
+      # TODO add stuff here
       deadzone = interp(CS.vEgo, self.CP.longitudinalTuning.deadzoneBP, self.CP.longitudinalTuning.deadzoneV)
-      freeze_integrator = prevent_overshoot
+      freeze_integrator = prevent_overshoot and not cactive
 
       error = self.v_pid - CS.vEgo
       error_deadzone = apply_deadzone(error, deadzone)
       
-      if self.c.get_isactive():
-        a_target = self.c.get_accel(-3.5, 1.5)
+      a_override = self.c.get_accel(accel_limits[0], accel_limits[1])
+      a_target = a_override if cactive else a_target
       output_accel = self.pid.update(error_deadzone, speed=CS.vEgo,
                                      feedforward=a_target,
                                      freeze_integrator=freeze_integrator)
