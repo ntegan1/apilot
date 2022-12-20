@@ -1,0 +1,223 @@
+diff --git a/pandatoyota.diff b/pandatoyota.diff
+new file mode 100644
+index 0000000000000..dd8ff3333bdf4
+--- /dev/null
++++ b/pandatoyota.diff
+@@ -0,0 +1,18 @@
++diff --git a/board/safety/safety_toyota.h b/board/safety/safety_toyota.h
++index 5aef744a..228007ee 100644
++--- a/board/safety/safety_toyota.h
+++++ b/board/safety/safety_toyota.h
++@@ -1,9 +1,9 @@
++ const SteeringLimits TOYOTA_STEERING_LIMITS = {
++   .max_steer = 1500,
++-  .max_rate_up = 15,          // ramp up slow
++-  .max_rate_down = 25,        // ramp down fast
++-  .max_torque_error = 350,    // max torque cmd in excess of motor torque
++-  .max_rt_delta = 450,        // the real time limit is 1800/sec, a 20% buffer
+++  .max_rate_up = 22,          // ramp up slow
+++  .max_rate_down = 33,        // ramp down fast
+++  .max_torque_error = 1800,    // max torque cmd in excess of motor torque
+++  .max_rt_delta = 1950,        // the real time limit is 1800/sec, a 20% buffer
++   .max_rt_interval = 250000,
++   .type = TorqueMotorLimited,
++ 
+diff --git a/pandatoyotavalues.diff b/pandatoyotavalues.diff
+new file mode 100644
+index 0000000000000..bab3e947f859b
+--- /dev/null
++++ b/pandatoyotavalues.diff
+@@ -0,0 +1,25 @@
++diff --git a/selfdrive/car/toyota/values.py b/selfdrive/car/toyota/values.py
++index 6a92540f0..33e6190af 100644
++--- a/selfdrive/car/toyota/values.py
+++++ b/selfdrive/car/toyota/values.py
++@@ -19,15 +19,15 @@ class CarControllerParams:
++   ACCEL_MIN = -3.5  # m/s2
++ 
++   STEER_MAX = 1500
++-  STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
+++  STEER_ERROR_MAX = 1800     # max delta between torque cmd and torque motor
++ 
++   def __init__(self, CP):
++     if CP.lateralTuning.which == 'torque':
++-      self.STEER_DELTA_UP = 15       # 1.0s time to peak torque
++-      self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
+++      self.STEER_DELTA_UP = 22       # 1.0s time to peak torque
+++      self.STEER_DELTA_DOWN = 33     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
++     else:
++-      self.STEER_DELTA_UP = 10       # 1.5s time to peak torque
++-      self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
+++      self.STEER_DELTA_UP = 22       # 1.5s time to peak torque
+++      self.STEER_DELTA_DOWN = 33     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
++ 
++ 
++ class ToyotaFlags(IntFlag):
+diff --git a/selfdrive/car/toyota/carcontroller.py b/selfdrive/car/toyota/carcontroller.py
+index 6dbdd4b5d9f7d..3c5fcb31975c1 100644
+--- a/selfdrive/car/toyota/carcontroller.py
++++ b/selfdrive/car/toyota/carcontroller.py
+@@ -47,7 +47,7 @@ def update(self, CC, CS):
+       if self.CP.carFingerprint in (CAR.RAV4, CAR.RAV4H, CAR.HIGHLANDER, CAR.HIGHLANDERH):
+         PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.15, 0.3, 0.0])
+       elif self.CP.carFingerprint in (CAR.COROLLA,):
+-        PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.3, 0.4, 0.0])
++        PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.15, 0.4, 0.0])
+       else:
+         PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.4, 0.5, 0.0])
+       # offset for creep and windbrake
+diff --git a/selfdrive/car/toyota/carstate.py b/selfdrive/car/toyota/carstate.py
+index 050f8747a2d0d..55ccca2c9b064 100644
+--- a/selfdrive/car/toyota/carstate.py
++++ b/selfdrive/car/toyota/carstate.py
+@@ -9,6 +9,7 @@
+ from opendbc.can.parser import CANParser
+ from selfdrive.car.interfaces import CarStateBase
+ from selfdrive.car.toyota.values import ToyotaFlags, CAR, DBC, STEER_THRESHOLD, NO_STOP_TIMER_CAR, TSS2_CAR, RADAR_ACC_CAR, EPS_SCALE, UNSUPPORTED_DSU_CAR
++from optool.setspeed.controller import Client
+ 
+ 
+ class CarState(CarStateBase):
+@@ -19,6 +20,7 @@ def __init__(self, CP):
+     self.eps_torque_scale = EPS_SCALE[CP.carFingerprint] / 100.
+     self.cluster_speed_hyst_gap = CV.KPH_TO_MS / 2.
+     self.cluster_min_speed = CV.KPH_TO_MS / 2.
++    self.c = Client()
+ 
+     # On cars with cp.vl["STEER_TORQUE_SENSOR"]["STEER_ANGLE"]
+     # the signal is zeroed to where the steering angle is at start.
+@@ -31,6 +33,7 @@ def __init__(self, CP):
+     self.lkas_hud = {}
+ 
+   def update(self, cp, cp_cam):
++    self.c.update()
+     ret = car.CarState.new_message()
+ 
+     ret.doorOpen = any([cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_FL"], cp.vl["BODY_CONTROL_STATE"]["DOOR_OPEN_FR"],
+@@ -106,6 +109,11 @@ def update(self, cp, cp_cam):
+       ret.cruiseState.speed = cp.vl["PCM_CRUISE_2"]["SET_SPEED"] * CV.KPH_TO_MS
+       cluster_set_speed = cp.vl["PCM_CRUISE_SM"]["UI_SET_SPEED"]
+ 
++    if self.c.get_isactive():
++      v = float(self.c.get_speed())
++      ret.cruiseState.speed = v * CV.MPH_TO_MS
++      cluster_set_speed = v
++
+     # UI_SET_SPEED is always non-zero when main is on, hide until first enable
+     if ret.cruiseState.speed != 0:
+       is_metric = cp.vl["BODY_CONTROL_STATE_2"]["UNITS"] in (1, 2)
+diff --git a/selfdrive/car/toyota/interface.py b/selfdrive/car/toyota/interface.py
+index 8e180e2301a8d..72aae98f413a1 100644
+--- a/selfdrive/car/toyota/interface.py
++++ b/selfdrive/car/toyota/interface.py
+@@ -228,6 +228,10 @@ def _get_params(ret, candidate, fingerprint, car_fw, experimental_long):
+         ret.vEgoStopping = 0.25
+         ret.vEgoStarting = 0.25
+         ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
++      ret.stoppingDecelRate = 0.59  # reach stopping target smoothly
++      ret.stopAccel = -0.6
++      ret.vEgoStarting = 0.32
++      ret.vEgoStopping = 0.32
+     else:
+       tune.kpBP = [0., 5., 35.]
+       tune.kiBP = [0., 35.]
+diff --git a/selfdrive/controls/controlsd.py b/selfdrive/controls/controlsd.py
+index 36f0b559c2eaa..3f79d4107972f 100755
+--- a/selfdrive/controls/controlsd.py
++++ b/selfdrive/controls/controlsd.py
+@@ -29,6 +29,7 @@
+ from selfdrive.locationd.calibrationd import Calibration
+ from system.hardware import HARDWARE
+ from selfdrive.manager.process_config import managed_processes
++from optool.setspeed.controller import Client
+ 
+ SOFT_DISABLE_TIME = 3  # seconds
+ LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
+@@ -60,6 +61,7 @@
+ 
+ class Controls:
+   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
++    self.c = Client()
+     config_realtime_process(4, Priority.CTRL_HIGH)
+ 
+     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
+@@ -593,7 +595,11 @@ def state_control(self, CS):
+       self.LoC.reset(v_pid=CS.vEgo)
+ 
+     if not self.joystick_mode:
++      self.c.update()
++      if self.c.get_newlyactive():
++        self.LoC.reset(v_pid=CS.vEgo)
+       # accel PID loop
++      # need these limits?
+       pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_helper.v_cruise_kph * CV.KPH_TO_MS)
+       t_since_plan = (self.sm.frame - self.sm.rcv_frame['longitudinalPlan']) * DT_CTRL
+       actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
+diff --git a/selfdrive/controls/lib/longcontrol.py b/selfdrive/controls/lib/longcontrol.py
+index 545a4c43ff9cc..901cba091de3f 100644
+--- a/selfdrive/controls/lib/longcontrol.py
++++ b/selfdrive/controls/lib/longcontrol.py
+@@ -4,6 +4,7 @@
+ from selfdrive.controls.lib.drive_helpers import CONTROL_N, apply_deadzone
+ from selfdrive.controls.lib.pid import PIDController
+ from selfdrive.modeld.constants import T_IDXS
++from optool.setspeed.controller import Client
+ 
+ LongCtrlState = car.CarControl.Actuators.LongControlState
+ 
+@@ -54,6 +55,7 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target,
+ 
+ class LongControl:
+   def __init__(self, CP):
++    self.c = Client()
+     self.CP = CP
+     self.long_control_state = LongCtrlState.off  # initialized to off
+     self.pid = PIDController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
+@@ -68,6 +70,7 @@ def reset(self, v_pid):
+     self.v_pid = v_pid
+ 
+   def update(self, active, CS, long_plan, accel_limits, t_since_plan):
++    self.c.update()
+     """Update longitudinal control. This updates the state machine and runs a PID loop"""
+     # Interp control trajectory
+     speeds = long_plan.speeds
+@@ -125,6 +128,9 @@ def update(self, active, CS, long_plan, accel_limits, t_since_plan):
+ 
+       error = self.v_pid - CS.vEgo
+       error_deadzone = apply_deadzone(error, deadzone)
++      
++      if self.c.get_isactive():
++        a_target = self.c.get_accel(-3.5, 1.5)
+       output_accel = self.pid.update(error_deadzone, speed=CS.vEgo,
+                                      feedforward=a_target,
+                                      freeze_integrator=freeze_integrator)
+diff --git a/selfdrive/controls/lib/longitudinal_planner.py b/selfdrive/controls/lib/longitudinal_planner.py
+index a0f6318323749..007c1ee3a2ed5 100755
+--- a/selfdrive/controls/lib/longitudinal_planner.py
++++ b/selfdrive/controls/lib/longitudinal_planner.py
+@@ -13,6 +13,7 @@
+ from selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import T_IDXS as T_IDXS_MPC
+ from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, CONTROL_N
+ from system.swaglog import cloudlog
++from optool.setspeed.controller import Client
+ 
+ LON_MPC_STEP = 0.2  # first step is 0.2s
+ AWARENESS_DECEL = -0.2  # car smoothly decel at .2m/s^2 when user is distracted
+@@ -49,6 +50,7 @@ def __init__(self, CP, init_v=0.0, init_a=0.0):
+     self.CP = CP
+     self.mpc = LongitudinalMpc()
+     self.fcw = False
++    self.c = Client()
+ 
+     self.a_desired = init_a
+     self.v_desired_filter = FirstOrderFilter(init_v, 2.0, DT_MDL)
+@@ -76,7 +78,8 @@ def parse_model(model_msg, model_error):
+     return x, v, a, j
+ 
+   def update(self, sm):
+-    self.mpc.mode = 'blended' if sm['controlsState'].experimentalMode else 'acc'
++    self.c.update()
++    self.mpc.mode = 'blended' if (not self.c.get_isactive()) and sm['controlsState'].experimentalMode else 'acc'
+ 
+     v_ego = sm['carState'].vEgo
+     v_cruise_kph = sm['controlsState'].vCruise
