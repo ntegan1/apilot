@@ -1,5 +1,6 @@
 from cereal import car
 from common.numpy_fast import clip, interp
+from common.conversions import Conversions as CV
 from common.realtime import DT_CTRL
 from selfdrive.controls.lib.drive_helpers import CONTROL_N, apply_deadzone
 from selfdrive.controls.lib.pid import PIDController
@@ -15,6 +16,11 @@ def long_control_state_trans(CP, active, long_control_state, v_ego, v_target,
   cruise_standstill = cruise_standstill and not CP.enableGasInterceptor
   accelerating = v_target_1sec > v_target
   # TODO: add stuff here
+  # set vt1sec > vt if want to accel
+  # set vt1sec = vt if want to stop? and both < vegostopping
+  # start condition if
+  # vt1sec > vestarting and accelerating
+
   planned_stop = (v_target < CP.vEgoStopping and
                   v_target_1sec < CP.vEgoStopping and
                   not accelerating)
@@ -72,6 +78,11 @@ class LongControl:
 
   def update(self, active, CS, long_plan, accel_limits, t_since_plan):
     self.c.update()
+    cactive = self.c.get_isactive()
+    a_override = self.c.get_accel(accel_limits[0], accel_limits[1])
+    #v_override = self.c.get_speed()
+    # when do want to override longcontrolstatetrans? just stopping/starting?
+    # stay stopped or accel from stop?
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
     # Interp control trajectory
     speeds = long_plan.speeds
@@ -131,8 +142,7 @@ class LongControl:
 
       error = self.v_pid - CS.vEgo
       error_deadzone = apply_deadzone(error, deadzone)
-      
-      a_override = self.c.get_accel(accel_limits[0], accel_limits[1])
+
       a_target = a_override if cactive else a_target
       output_accel = self.pid.update(error_deadzone, speed=CS.vEgo,
                                      feedforward=a_target,
