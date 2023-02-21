@@ -28,7 +28,7 @@ class CarInterface(CarInterfaceBase):
     ret.stoppingControl = False  # Toyota starts braking more when it thinks you want to stop
 
     stop_and_go = False
-    steering_angle_deadzone_deg = 0.0
+    steering_angle_deadzone_deg = 0.1
     CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning, steering_angle_deadzone_deg)
 
     if candidate == CAR.PRIUS:
@@ -220,14 +220,17 @@ class CarInterface(CarInterfaceBase):
     tune.deadzoneBP = [0., 9.]
     tune.deadzoneV = [.0, .15]
     if candidate in TSS2_CAR or ret.enableGasInterceptor:
-      tune.kpBP = [0., 5., 20.]
-      tune.kpV = [1.3, 1.0, 0.7]
+      tune.kpBP = [0., 5., 20., 30.]
+      tune.kpV = [1.1, 1.0, 0.7, 0.1]
       tune.kiBP = [0., 5., 12., 20., 27.]
-      tune.kiV = [.35, .23, .20, .17, .1]
-      if candidate in TSS2_CAR:
-        ret.vEgoStopping = 0.25
-        ret.vEgoStarting = 0.25
-        ret.stoppingDecelRate = 0.3  # reach stopping target smoothly
+      tune.kiV = [.29, .21, .19, .14, .1]
+      ret.longitudinalActuatorDelayLowerBound = 0.25
+      ret.longitudinalActuatorDelayUpperBound = 0.35
+      ret.stopAccel = -0.9
+      ret.startAccel = 0.3
+      ret.vEgoStopping = 0.75
+      ret.vEgoStarting = 0.18
+      ret.stoppingDecelRate = 0.45  # reach stopping target smoothly
     else:
       tune.kpBP = [0., 5., 35.]
       tune.kiBP = [0., 35.]
