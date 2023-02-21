@@ -20,12 +20,12 @@ class CarControllerParams:
 
   STEER_STEP = 1
   STEER_MAX = 1500
-  STEER_ERROR_MAX = 600     # max delta between torque cmd and torque motor
+  STEER_ERROR_MAX = 1200     # max delta between torque cmd and torque motor
 
   def __init__(self, CP):
     if CP.lateralTuning.which == 'torque':
-      self.STEER_DELTA_UP = 17       # 1.0s time to peak torque
-      self.STEER_DELTA_DOWN = 32     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
+      self.STEER_DELTA_UP = 19       # 1.0s time to peak torque
+      self.STEER_DELTA_DOWN = 34     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
     else:
       self.STEER_DELTA_UP = 10       # 1.5s time to peak torque
       self.STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
