@@ -4,6 +4,7 @@ import time
 from abc import abstractmethod, ABC
 from typing import Any, Dict, Optional, Tuple, List, Callable
 
+from panda import ALTERNATIVE_EXPERIENCE
 from cereal import car
 from common.basedir import BASEDIR
 from common.conversions import Conversions as CV
@@ -250,6 +251,7 @@ class CarInterfaceBase(ABC):
     if cs_out.gearShifter == GearShifter.reverse:
       events.add(EventName.reverseGear)
     if not cs_out.cruiseState.available:
+      # main off
       events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
@@ -299,7 +301,8 @@ class CarInterfaceBase(ABC):
       if cs_out.cruiseState.enabled and not self.CS.out.cruiseState.enabled and allow_enable:
         events.add(EventName.pcmEnable)
       elif not cs_out.cruiseState.enabled:
-        events.add(EventName.pcmDisable)
+        if not bool(self.CP.alternativeExperience & ALTERNATIVE_EXPERIENCE.PCM_ALLOW_LKAS_ONLY_MODE):
+          events.add(EventName.pcmDisable)
 
     return events
 

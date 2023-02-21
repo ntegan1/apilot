@@ -108,7 +108,7 @@ class Controls:
 
     # set alternative experiences from parameters
     self.disengage_on_accelerator = self.params.get_bool("DisengageOnAccelerator")
-    self.CP.alternativeExperience = 0
+    self.CP.alternativeExperience = ALTERNATIVE_EXPERIENCE.PCM_ALLOW_LKAS_ONLY_MODE
     if not self.disengage_on_accelerator:
       self.CP.alternativeExperience |= ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
@@ -579,6 +579,9 @@ class Controls:
     CC.latActive = self.active and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
                    (not standstill or self.joystick_mode)
     CC.longActive = self.enabled and not self.events.any(ET.OVERRIDE_LONGITUDINAL) and self.CP.openpilotLongitudinalControl
+
+    if bool(self.CP.alternativeExperience & ALTERNATIVE_EXPERIENCE.PCM_ALLOW_LKAS_ONLY_MODE):
+      CC.longActive = CC.longActive and (CS.cruiseState.enabled)
 
     actuators = CC.actuators
     actuators.longControlState = self.LoC.long_control_state
