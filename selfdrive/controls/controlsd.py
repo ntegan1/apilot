@@ -57,8 +57,6 @@ ACTUATOR_FIELDS = tuple(car.CarControl.Actuators.schema.fields.keys())
 ACTIVE_STATES = (State.enabled, State.softDisabling, State.overriding)
 ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 
-PCM_ALLOW_LKAS_ONLY_MODE = 16
-
 
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
@@ -110,7 +108,7 @@ class Controls:
 
     # set alternative experiences from parameters
     self.disengage_on_accelerator = self.params.get_bool("DisengageOnAccelerator")
-    self.CP.alternativeExperience = PCM_ALLOW_LKAS_ONLY_MODE
+    self.CP.alternativeExperience = ALTERNATIVE_EXPERIENCE.PCM_ALLOW_LKAS_ONLY_MODE
     if not self.disengage_on_accelerator:
       self.CP.alternativeExperience |= ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
@@ -582,7 +580,7 @@ class Controls:
                    (not standstill or self.joystick_mode)
     CC.longActive = self.enabled and not self.events.any(ET.OVERRIDE_LONGITUDINAL) and self.CP.openpilotLongitudinalControl
 
-    if bool(self.CP.alternativeExperience & PCM_ALLOW_LKAS_ONLY_MODE):
+    if bool(self.CP.alternativeExperience & ALTERNATIVE_EXPERIENCE.PCM_ALLOW_LKAS_ONLY_MODE):
       CC.longActive = CC.longActive and (CS.cruiseState.enabled)
 
     actuators = CC.actuators
