@@ -585,6 +585,11 @@ class Controls:
           self.maneuvering = False
           self.maneuver_begin_frame = None
 
+    if self.maneuvering:
+      long_plan.speeds = [5. * CV.MPH_TO_MS] * CONTROL_N
+      long_plan.accels = [-1.] * CONTROL_N
+      long_plan.jerks = [0.] * CONTROL_N
+
     CC = car.CarControl.new_message()
     CC.enabled = self.enabled
 

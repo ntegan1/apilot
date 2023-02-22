@@ -3,7 +3,6 @@ import math
 import numpy as np
 from common.numpy_fast import clip, interp
 
-from cereal import car
 import cereal.messaging as messaging
 from common.conversions import Conversions as CV
 from common.filter_simple import FirstOrderFilter
@@ -46,7 +45,6 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 class LongitudinalPlanner:
   def __init__(self, CP, init_v=0.0, init_a=0.0):
-    self.maneuvering = False
     self.CP = CP
     self.mpc = LongitudinalMpc()
     self.fcw = False
@@ -78,13 +76,6 @@ class LongitudinalPlanner:
 
   def update(self, sm):
     self.mpc.mode = 'blended' if sm['controlsState'].experimentalMode else 'acc'
-    be = sm['carState'].buttonEvents
-    for b in be:
-      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-        if b.pressed is True:
-          self.maneuvering = True
-        elif b.pressed is False:
-          self.maneuvering = False
 
     v_ego = sm['carState'].vEgo
     v_cruise_kph = sm['controlsState'].vCruise
@@ -161,13 +152,6 @@ class LongitudinalPlanner:
     longitudinalPlan.hasLead = sm['radarState'].leadOne.status
     longitudinalPlan.longitudinalPlanSource = self.mpc.source
     longitudinalPlan.fcw = self.fcw
-
-    if self.maneuvering:
-      longitudinalPlan.speeds = [5. * CV.MPH_TO_MS] * CONTROL_N
-      longitudinalPlan.accels = [-1.] * CONTROL_N
-      longitudinalPlan.jerks = [0.] * CONTROL_N
-      longitudinalPlan.hasLead = True
-
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 
