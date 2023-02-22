@@ -55,7 +55,7 @@ class CarController:
       if self.gac_pressed_frame is not None:
         # button is held
         #gac_pressed_duration = (self.frame - self.gac_pressed_frame) * DT_CTRL
-        manual_accel = -1.
+        manual_accel = None
 
     # gas and brake
     a = actuators.accel if manual_accel is None else manual_accel
