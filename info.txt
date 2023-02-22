@@ -1,0 +1,32 @@
+## programmable longitudinal maneuvers
+
+probably use with chill mode for reproducible planning
+
+### Maneuver object
+jump instantaneously to velocity at next point,
+or interpolate smoothly
+
+{
+  duration: 14, // seconds
+  should_interpolate: false,
+  points: [
+    // time, velocitymph
+    {0, 0},
+    {5, 10},
+    {8, 10},
+    {12, 2},
+    {14, 0},
+  ],
+}
+
+### maneuver execution
+once maneuver is selected and commanded
+override setspeed from cruisestate with points from maneuver
+
+### web app
+c3 hosted web app to choose maneuver, start/stop, view progress
+start with a few maneuvers to choose from
+
+maybe later add a graph to display progress on phone
+
+

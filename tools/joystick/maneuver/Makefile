@@ -1,0 +1,5 @@
+
+
+
+run:
+	./maneuver 0

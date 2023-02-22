@@ -1,0 +1,14 @@
+{
+  "name": "first test maneuver",
+  "duration": 14,
+  "should_interpolate": false,
+  "velocity_unit": "mph",
+  "points": [
+    [0, 0],
+    [5, 10],
+    [8, 10],
+    [12, 2],
+    [14, 0]
+  ]
+}
+

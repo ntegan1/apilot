@@ -3,6 +3,7 @@ import math
 import numpy as np
 from common.numpy_fast import clip, interp
 
+from tools.joystick.maneuver import ManeuverController
 import cereal.messaging as messaging
 from common.conversions import Conversions as CV
 from common.filter_simple import FirstOrderFilter
@@ -45,6 +46,7 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 class LongitudinalPlanner:
   def __init__(self, CP, init_v=0.0, init_a=0.0):
+    self.mc = ManeuverController()
     self.CP = CP
     self.mpc = LongitudinalMpc()
     self.fcw = False
@@ -80,6 +82,8 @@ class LongitudinalPlanner:
     v_ego = sm['carState'].vEgo
     v_cruise_kph = sm['controlsState'].vCruise
     v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX)
+    v_override = self.mc.update(vcruise_kph)
+    v_cruise_kph = v_override
     v_cruise = v_cruise_kph * CV.KPH_TO_MS
 
     long_control_off = sm['controlsState'].longControlState == LongCtrlState.off
