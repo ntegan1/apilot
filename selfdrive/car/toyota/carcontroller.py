@@ -44,26 +44,22 @@ class CarController:
     manual_accel = None
 
     if CS.smartDsu:
-      gac_pressed = None
       for b in CS.out.buttonEvents:
         if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-          gac_pressed = b.pressed
-          break
-      rising_edge = self.gac_pressed_frame is None and gac_pressed is True
-      falling_edge = self.gac_pressed_frame is not None and gac_pressed is False
-      if rising_edge:
-        self.gac_pressed_frame = self.frame
-        manual_accel = 0.
-      elif falling_edge:
-        self.gac_pressed_frame = None
-        manual_accel = 0.
-      elif self.gac_pressed_frame is not None:
+          rising_edge = self.gac_pressed_frame is None and b.pressed is True
+          falling_edge = self.gac_pressed_frame is not None and b.pressed is False
+          if rising_edge:
+            self.gac_pressed_frame = self.frame
+          elif falling_edge:
+            self.gac_pressed_frame = None
+      if self.gac_pressed_frame is not None:
         # button is held
-        gac_pressed_duration = (self.frame - self.gac_pressed_frame) * DT_CTRL
+        #gac_pressed_duration = (self.frame - self.gac_pressed_frame) * DT_CTRL
         manual_accel = -1.
 
     # gas and brake
     a = actuators.accel if manual_accel is None else manual_accel
+    actuators.accel = a # need this??? to show up in logs??
     MPH_TO_MS = .447
     mtm = MPH_TO_MS
     if self.CP.enableGasInterceptor and CC.longActive:
