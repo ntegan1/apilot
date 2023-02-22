@@ -64,6 +64,7 @@ class Controls:
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
     self.branch = get_short_branch("")
+    self.auto_resume_lat = False
 
     # Setup sockets
     self.pm = pm
@@ -248,7 +249,12 @@ class Controls:
     if (CS.gasPressed and not self.CS_prev.gasPressed and self.disengage_on_accelerator) or \
       (CS.brakePressed and (not self.CS_prev.brakePressed or not CS.standstill)) or \
       (CS.regenBraking and (not self.CS_prev.regenBraking or not CS.standstill)):
+      self.auto_resume_lat = True
       self.events.add(EventName.pedalPressed)
+
+    if (not CS.brakePressed and self.CS_prev.brakePressed and self.auto_resume_lat):
+      events.add(EventName.buttonEnable)
+      self.auto_resume_lat = False
 
     if CS.brakePressed and CS.standstill:
       self.events.add(EventName.preEnableStandstill)
