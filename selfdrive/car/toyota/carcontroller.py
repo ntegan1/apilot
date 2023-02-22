@@ -45,7 +45,7 @@ class CarController:
 
     if CS.smartDsu:
       gac_pressed = None
-      for b in CS.buttonEvents:
+      for b in CS.out.buttonEvents:
         if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
           gac_pressed = b.pressed
           break

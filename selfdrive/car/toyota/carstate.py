@@ -85,8 +85,8 @@ class CarState(CarStateBase):
     ret.leftBlinker = cp.vl["BLINKERS_STATE"]["TURN_SIGNALS"] == 1
     ret.rightBlinker = cp.vl["BLINKERS_STATE"]["TURN_SIGNALS"] == 2
 
+    be = []
     if self.smartDsu:
-      be = []
       fd_button = cp.vl["SDSU"]["FD_BUTTON"] == 1
       #should_update = self.gapAdjustCruisePrev is None
       should_update = not (self.gapAdjustCruisePrev == fd_button)
@@ -96,7 +96,7 @@ class CarState(CarStateBase):
         event.pressed = fd_button
         be.append(event)
         self.gapAdjustCruisePrev = fd_button
-      ret.buttonEvents = be
+    ret.buttonEvents = be
 
     ret.steeringTorque = cp.vl["STEER_TORQUE_SENSOR"]["STEER_TORQUE_DRIVER"]
     ret.steeringTorqueEps = cp.vl["STEER_TORQUE_SENSOR"]["STEER_TORQUE_EPS"] * self.eps_torque_scale
