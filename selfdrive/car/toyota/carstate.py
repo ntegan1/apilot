@@ -90,7 +90,7 @@ class CarState(CarStateBase):
       fd_button = cp.vl["SDSU"]["FD_BUTTON"] == 1
       #should_update = self.gapAdjustCruisePrev is None
       should_update = not (self.gapAdjustCruisePrev == fd_button)
-      if update_button:
+      if should_update:
         event = car.CarState.ButtonEvent.new_message()
         event.type = car.CarState.ButtonEvent.Type.gapAdjustCruise
         event.pressed = fd_button
