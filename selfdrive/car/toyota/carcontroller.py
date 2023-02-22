@@ -1,5 +1,6 @@
 from cereal import car
 from common.numpy_fast import clip, interp
+from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits, create_gas_interceptor_command, make_can_msg
 from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_command, \
                                            create_accel_command, create_acc_cancel_command, \
@@ -29,6 +30,7 @@ class CarController:
     self.last_standstill = False
     self.standstill_req = False
     self.steer_rate_counter = 0
+    self.gac_pressed_frame = None
 
     self.packer = CANPacker(dbc_name)
     self.gas = 0
@@ -39,8 +41,29 @@ class CarController:
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
+    manual_accel = None
+
+    if CS.smartDsu:
+      gac_pressed = None
+      for b in CS.buttonEvents:
+        if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
+          gac_pressed = b.pressed
+          break
+      rising_edge = self.gac_pressed_frame is None and gac_pressed is True
+      falling_edge = self.gac_pressed_frame is not None and gac_pressed is False
+      if rising_edge:
+        self.gac_pressed_frame = self.frame
+        manual_accel = 0.
+      elif falling_edge:
+        self.gac_pressed_frame = None
+        manual_accel = 0.
+      elif self.gac_pressed_frame is not None:
+        # button is held
+        gac_pressed_duration = (self.frame - self.gac_pressed_frame) * DT_CTRL
+        manual_accel = -1.
 
     # gas and brake
+    a = actuators.accel if manual_accel is None else manual_accel
     if self.CP.enableGasInterceptor and CC.longActive:
       MAX_INTERCEPTOR_GAS = 0.5
       # RAV4 has very sensitive gas pedal
@@ -52,11 +75,11 @@ class CarController:
         PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.4, 0.5, 0.0])
       # offset for creep and windbrake
       pedal_offset = interp(CS.out.vEgo, [0.0, 2.3, MIN_ACC_SPEED + PEDAL_TRANSITION], [-.4, 0.0, 0.2])
-      pedal_command = PEDAL_SCALE * (actuators.accel + pedal_offset)
+      pedal_command = PEDAL_SCALE * (a + pedal_offset)
       interceptor_gas_cmd = clip(pedal_command, 0., MAX_INTERCEPTOR_GAS)
     else:
       interceptor_gas_cmd = 0.
-    pcm_accel_cmd = 0 if not CC.longActive else clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
+    pcm_accel_cmd = 0 if not CC.longActive else clip(a, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX)
 
     # steer torque
     new_steer = int(round(actuators.steer * CarControllerParams.STEER_MAX))
