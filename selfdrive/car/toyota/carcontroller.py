@@ -1,6 +1,5 @@
 from cereal import car
 from common.numpy_fast import clip, interp
-from common.realtime import DT_CTRL
 from selfdrive.car import apply_toyota_steer_torque_limits, create_gas_interceptor_command, make_can_msg
 from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_command, \
                                            create_accel_command, create_acc_cancel_command, \
@@ -30,7 +29,6 @@ class CarController:
     self.last_standstill = False
     self.standstill_req = False
     self.steer_rate_counter = 0
-    self.gac_pressed_frame = None
 
     self.packer = CANPacker(dbc_name)
     self.gas = 0
@@ -41,32 +39,6 @@ class CarController:
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
-
-    if CS.smartDsu:
-      # CS.out is last, and CS.stuff is new
-
-      # update gac button info
-      gac_pressed = None
-      gac_pressed_prev = CS.gapAdjustCruisePrev
-      # is btn newly pressed or released
-      for b in CS.buttonEvents:
-        if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-          gac_pressed = b.pressed
-      # is there a new change? i.e. presed/released
-      if gac_pressed is not None and gac_pressed_prev is not None:
-        rising_edge = gac_pressed and not gac_pressed_prev
-        falling_edge = not gac_pressed and gac_pressed_prev
-        if rising_edge:
-          self.gac_pressed_frame = self.frame
-        elif falling_edge:
-          gac_pressed_duration = (self.frame - self.gac_pressed_frame) * DT_CTRL
-          self.gac_pressed_frame = None
-          # do something with this information (on release)
-      gac_held_down = self.gac_pressed_frame is not None
-      if gac_held_down:
-        gac_pressed_duration = (self.frame - self.gac_pressed_frame) * DT_CTRL
-        pass
-        # do something while held down
 
     # gas and brake
     if self.CP.enableGasInterceptor and CC.longActive:
