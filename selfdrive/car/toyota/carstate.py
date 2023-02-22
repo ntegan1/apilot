@@ -10,7 +10,6 @@ from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.toyota.values import ToyotaFlags, CAR, DBC, STEER_THRESHOLD, NO_STOP_TIMER_CAR, TSS2_CAR, RADAR_ACC_CAR, EPS_SCALE, UNSUPPORTED_DSU_CAR
 
-
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
@@ -240,7 +239,8 @@ class CarState(CarStateBase):
       signals.append(("INTERCEPTOR_GAS2", "GAS_SENSOR"))
       checks.append(("GAS_SENSOR", 50))
 
-    if self.smartDsu:
+    smartDsu = CP.openpilotLongitudinalControl and not CP.enableDsu and not (CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR))
+    if smartDsu:
       signals.append(("FD_BUTTON", "SDSU"))
       checks.append(("SDSU", 33))
 
