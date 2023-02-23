@@ -606,6 +606,7 @@ class Controls:
 
     if maneuver_reset:
       print("controlsd maneuver reset todo is this a good idea?")
+    maneuver_reset = False
     if not CC.latActive:
       self.LaC.reset()
     if not CC.longActive or maneuver_reset:
