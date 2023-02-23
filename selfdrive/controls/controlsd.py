@@ -595,7 +595,19 @@ class Controls:
       self.last_blinker_frame = self.sm.frame
 
     # State specific actions
+    be = CS.buttonEvents
+    maneuver_reset = False
+    for b in be:
+      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
+        if b.pressed is True:
+          print("controlsd pressed")
+          maneuver_reset = True
+        elif b.pressed is False:
+          maneuver_reset = True
+          print("controlsd not pressed")
 
+    if maneuver_reset:
+      print("controlsd maneuver reset")
     if not CC.latActive:
       self.LaC.reset()
     if not CC.longActive:
