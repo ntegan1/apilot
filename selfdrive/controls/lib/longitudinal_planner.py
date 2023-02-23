@@ -27,6 +27,7 @@ _A_TOTAL_MAX_BP = [20., 40.]
 def control_n_interp(t, times, vals):
   return np.interp(T_IDXS[:CONTROL_N] + t, times, vals)
 class Maneuver:
+  ii = 0
   tva = [
     # time, vel(mph), accel
     (0., 5., -.4),
@@ -198,13 +199,20 @@ class LongitudinalPlanner:
     longitudinalPlan.longitudinalPlanSource = self.mpc.source
     longitudinalPlan.fcw = self.fcw
 
-    if self.maneuvering and not self.fcw:
+    if self.maneuvering:
       t = (plan_send.logMonoTime - self.maneuverStartMonoTime) / 1e9
       longitudinalPlan.speeds = self.maneuver.get_speeds(t)
       longitudinalPlan.accels = self.maneuver.get_accels(t)
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
+      if (ii % 10) == 0:
+        print("maneuver")
+        print(longitudinalPlan.speeds)
+        print(plan_send.logMonoTime)
+        print(self.maneuverStartMonoTime)
+        print(longitudinalPlan.speeds)
 
+    ii = ii + 1
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 
