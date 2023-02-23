@@ -25,7 +25,7 @@ _A_TOTAL_MAX_V = [1.7, 3.2]
 _A_TOTAL_MAX_BP = [20., 40.]
 
 def control_n_interp(t, times, vals):
-  return np.interp(T_IDXS[:CONTROL_N], times, vals)
+  return np.interp(T_IDXS[:CONTROL_N] + t, times, vals)
 class Maneuver:
   tva = [
     # time, vel(mph), accel
