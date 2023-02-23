@@ -78,6 +78,15 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 
 class LongitudinalPlanner:
+  def maneuver_update(self, be, lmt):
+    for b in be:
+      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
+        if b.pressed is True:
+          self.maneuvering = True
+          self.maneuverStartMonoTime = lmt
+        elif b.pressed is False:
+          self.maneuvering = False
+          self.maneuverStartMonoTime = None
   def __init__(self, CP, init_v=0.0, init_a=0.0):
     self.ii = 0
     self.maneuver = Maneuver()
@@ -114,15 +123,6 @@ class LongitudinalPlanner:
 
   def update(self, sm):
     self.mpc.mode = 'blended' if sm['controlsState'].experimentalMode else 'acc'
-    be = sm['carState'].buttonEvents
-    for b in be:
-      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-        if b.pressed is True:
-          self.maneuvering = True
-          self.maneuverStartMonoTime = sm.logMonoTime['carState']
-        elif b.pressed is False:
-          self.maneuvering = False
-          self.maneuverStartMonoTime = None
 
     v_ego = sm['carState'].vEgo
     v_cruise_kph = sm['controlsState'].vCruise
@@ -192,9 +192,10 @@ class LongitudinalPlanner:
     longitudinalPlan.modelMonoTime = sm.logMonoTime['modelV2']
     longitudinalPlan.processingDelay = (plan_send.logMonoTime / 1e9) - sm.logMonoTime['modelV2']
 
-    longitudinalPlan.speeds = self.v_desired_trajectory.tolist()
-    longitudinalPlan.accels = self.a_desired_trajectory.tolist()
-    longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
+    if not self.maneuvering:
+      longitudinalPlan.speeds = self.v_desired_trajectory.tolist()
+      longitudinalPlan.accels = self.a_desired_trajectory.tolist()
+      longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
 
     longitudinalPlan.hasLead = sm['radarState'].leadOne.status
     longitudinalPlan.longitudinalPlanSource = self.mpc.source
@@ -202,11 +203,11 @@ class LongitudinalPlanner:
 
     if self.maneuvering:
       t = (plan_send.logMonoTime/1e9 - self.maneuverStartMonoTime)
-      longitudinalPlan.speeds = self.maneuver.get_speeds(t)
-      longitudinalPlan.accels = self.maneuver.get_accels(t)
+      longitudinalPlan.speeds = self.maneuver.get_speeds(t).tolist()
+      longitudinalPlan.accels = self.maneuver.get_accels(t).tolist()
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
-      if (self.ii % 10) == 0:
+      if (self.ii % 8) == 0:
         print("maneuver")
         print(longitudinalPlan.speeds)
         print(plan_send.logMonoTime / 1e9)
