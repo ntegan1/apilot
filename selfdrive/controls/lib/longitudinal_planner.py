@@ -34,9 +34,9 @@ class Maneuver:
     (2., 5., -.4),
     (2.1, 5., -.8),
     (4, 5., -.8),
-    (4.1, 0., -1.5),
-    (5.5, 0., -1.5),
-    (5.6, 0., -.4),
+    (8.1, 0., -1.5),
+    (9.5, 0., -1.5),
+    (9.6, 0., -.4),
   ]
   speeds = []
   accels = []
@@ -84,7 +84,7 @@ class LongitudinalPlanner:
         if b.pressed is True:
           self.maneuvering = True
           self.maneuverStartMonoTime = lmt
-        elif b.pressed is False:
+        if b.pressed is False:
           self.maneuvering = False
           self.maneuverStartMonoTime = None
   def __init__(self, CP, init_v=0.0, init_a=0.0):
