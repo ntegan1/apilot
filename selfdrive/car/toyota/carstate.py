@@ -94,6 +94,10 @@ class CarState(CarStateBase):
         event = car.CarState.ButtonEvent.new_message()
         event.type = car.CarState.ButtonEvent.Type.gapAdjustCruise
         event.pressed = fd_button
+        if fd_button:
+          print("carstate pressed: ")
+        else:
+          print("carstate not pressed: ")
         be.append(event)
         self.gapAdjustCruisePrev = fd_button
     ret.buttonEvents = be
