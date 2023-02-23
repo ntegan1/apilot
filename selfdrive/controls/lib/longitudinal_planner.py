@@ -24,6 +24,20 @@ A_CRUISE_MAX_BP = [0., 10.0, 25., 40.]
 _A_TOTAL_MAX_V = [1.7, 3.2]
 _A_TOTAL_MAX_BP = [20., 40.]
 
+class Maneuver:
+  speeds = [ #mph
+    0., 0., 5., 7., 12., 0.,
+  ]
+  accels = [
+    -.4, -.4, 
+  ]
+  times = [
+    0., 5.,
+  ]
+  def __convert_mph_to_ms(self):
+    self.true = False
+  def __init__(self):
+    self.__convert_mph_to_ms()
 
 def get_max_accel(v_ego):
   return interp(v_ego, A_CRUISE_MAX_BP, A_CRUISE_MAX_VALS)
@@ -165,7 +179,7 @@ class LongitudinalPlanner:
     longitudinalPlan.longitudinalPlanSource = self.mpc.source
     longitudinalPlan.fcw = self.fcw
 
-    if self.maneuvering:
+    if self.maneuvering and not self.fcw:
       longitudinalPlan.speeds = [5. * CV.MPH_TO_MS] * CONTROL_N
       longitudinalPlan.accels = [-1.] * CONTROL_N
       longitudinalPlan.jerks = [0.] * CONTROL_N
