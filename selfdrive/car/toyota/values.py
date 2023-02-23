@@ -20,7 +20,7 @@ class CarControllerParams:
 
   STEER_STEP = 1
   STEER_MAX = 1500
-  STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
+  STEER_ERROR_MAX = 615     # max delta between torque cmd and torque motor
 
   def __init__(self, CP):
     if CP.lateralTuning.which == 'torque':
