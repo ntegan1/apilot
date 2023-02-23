@@ -35,6 +35,17 @@ class ToyotaFlags(IntFlag):
   HYBRID = 1
 
 
+# Car button codes for COROLLA
+class CruiseButtons:
+  ACCEL_ACC = 9
+  DECEL_ACC = 10
+  SET_ACC = 8
+  ACCEL_CC = 6
+  DECEL_CC = 5
+  SET_CC = 1 
+  CANCEL = 0
+
+
 class CAR:
   # Toyota
   ALPHARD_TSS2 = "TOYOTA ALPHARD 2020"

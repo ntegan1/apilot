@@ -2,11 +2,12 @@
 from cereal import car
 from common.conversions import Conversions as CV
 from panda import Panda
-from selfdrive.car.toyota.values import Ecu, CAR, ToyotaFlags, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR, MIN_ACC_SPEED, EPS_SCALE, EV_HYBRID_CAR, UNSUPPORTED_DSU_CAR, CarControllerParams, NO_STOP_TIMER_CAR
+from selfdrive.car.toyota.values import CruiseButtons, Ecu, CAR, ToyotaFlags, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR, MIN_ACC_SPEED, EPS_SCALE, EV_HYBRID_CAR, UNSUPPORTED_DSU_CAR, CarControllerParams, NO_STOP_TIMER_CAR
 from selfdrive.car import STD_CARGO_KG, scale_tire_stiffness, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
 
 EventName = car.CarEvent.EventName
+ButtonType = car.CarState.ButtonEvent.Type
 
 
 class CarInterface(CarInterfaceBase):
@@ -239,6 +240,37 @@ class CarInterface(CarInterfaceBase):
   # returns a car.CarState
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
++    buttonEvents = [] 
++    
++    #SET / CANCEL
++    if ret.cruiseState.enabled and not self.CS.out.cruiseState.enabled:
++      be = car.CarState.ButtonEvent.new_message()
++      be.pressed = False
++      be.type = ButtonType.setCruise
++      buttonEvents.append(be)
++    elif self.CS.out.cruiseState.enabled and not ret.cruiseState.enabled:
++      be = car.CarState.ButtonEvent.new_message()
++      be.pressed = True
++      be.type = ButtonType.cancel
++      buttonEvents.append(be)
++
++    #ACCEL / DECEL
++    if self.CS.cruise_buttons != self.CS.prev_cruise_buttons:
++      be = car.CarState.ButtonEvent.new_message()
++      be.type = ButtonType.unknown
++      if self.CS.cruise_buttons in [CruiseButtons.ACCEL_ACC, CruiseButtons.ACCEL_CC,CruiseButtons.DECEL_ACC, CruiseButtons.DECEL_CC]:
++        be.pressed = True
++        but = self.CS.cruise_buttons
++      else:
++        be.pressed = False
++        but = self.CS.prev_cruise_buttons
++      if but in [CruiseButtons.ACCEL_ACC, CruiseButtons.ACCEL_CC]:
++        be.type = ButtonType.accelCruise
++      elif but in [CruiseButtons.DECEL_ACC, CruiseButtons.DECEL_CC]:
++        be.type = ButtonType.decelCruise
++      buttonEvents.append(be)
++
++    ret.buttonEvents = buttonEvents
 
     # events
     events = self.create_common_events(ret)
