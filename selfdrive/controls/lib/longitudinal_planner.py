@@ -118,7 +118,7 @@ class LongitudinalPlanner:
       if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
         if b.pressed is True:
           self.maneuvering = True
-          self.maneuverStartMonoTime = sm['carState'].logMonoTime
+          self.maneuverStartMonoTime = sm.logMonoTime['carState']
         elif b.pressed is False:
           self.maneuvering = False
           self.maneuverStartMonoTime = None
@@ -200,7 +200,7 @@ class LongitudinalPlanner:
     longitudinalPlan.fcw = self.fcw
 
     if self.maneuvering:
-      t = (plan_send.logMonoTime - self.maneuverStartMonoTime) / 1e9
+      t = (plan_send.logMonoTime/1e9 - self.maneuverStartMonoTime)
       longitudinalPlan.speeds = self.maneuver.get_speeds(t)
       longitudinalPlan.accels = self.maneuver.get_accels(t)
       longitudinalPlan.jerks = [0.] * CONTROL_N
@@ -208,7 +208,7 @@ class LongitudinalPlanner:
       if (self.ii % 10) == 0:
         print("maneuver")
         print(longitudinalPlan.speeds)
-        print(plan_send.logMonoTime)
+        print(plan_send.logMonoTime / 1e9)
         print(self.maneuverStartMonoTime)
         print(longitudinalPlan.speeds)
 
