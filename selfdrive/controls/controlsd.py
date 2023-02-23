@@ -595,10 +595,18 @@ class Controls:
       self.last_blinker_frame = self.sm.frame
 
     # State specific actions
+    be = CS.buttonEvents
+    maneuver_reset = False
+    for b in be:
+      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
+        if b.pressed is True:
+          maneuver_reset = True
+        elif b.pressed is False:
+          maneuver_reset = True
 
     if not CC.latActive:
       self.LaC.reset()
-    if not CC.longActive:
+    if not CC.longActive or maneuver_reset:
       self.LoC.reset(v_pid=CS.vEgo)
 
     if not self.joystick_mode:
