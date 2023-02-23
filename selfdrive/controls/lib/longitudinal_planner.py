@@ -27,7 +27,6 @@ _A_TOTAL_MAX_BP = [20., 40.]
 def control_n_interp(t, times, vals):
   return np.interp(T_IDXS[:CONTROL_N] + t, times, vals)
 class Maneuver:
-  ii = 0
   tva = [
     # time, vel(mph), accel
     (0., 5., -.4),
@@ -79,6 +78,7 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 class LongitudinalPlanner:
   def __init__(self, CP, init_v=0.0, init_a=0.0):
+    self.ii = 0
     self.maneuver = Maneuver()
     self.maneuvering = False
     self.maneuverStartMonoTime = None # this * 1e9 = seconds
@@ -205,14 +205,14 @@ class LongitudinalPlanner:
       longitudinalPlan.accels = self.maneuver.get_accels(t)
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
-      if (ii % 10) == 0:
+      if (self.ii % 10) == 0:
         print("maneuver")
         print(longitudinalPlan.speeds)
         print(plan_send.logMonoTime)
         print(self.maneuverStartMonoTime)
         print(longitudinalPlan.speeds)
 
-    ii = ii + 1
+    self.ii = self.ii + 1
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 
