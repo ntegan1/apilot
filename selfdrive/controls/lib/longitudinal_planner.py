@@ -47,6 +47,7 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 class LongitudinalPlanner:
   def __init__(self, CP, init_v=0.0, init_a=0.0):
     self.maneuvering = False
+    self.maneuverStartMonoTime = None # this * 1e9 = seconds
     self.CP = CP
     self.mpc = LongitudinalMpc()
     self.fcw = False
@@ -83,8 +84,10 @@ class LongitudinalPlanner:
       if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
         if b.pressed is True:
           self.maneuvering = True
+          self.maneuverStartMonoTime = sm['carState'].logMonoTime
         elif b.pressed is False:
           self.maneuvering = False
+          self.maneuverStartMonoTime = None
 
     v_ego = sm['carState'].vEgo
     v_cruise_kph = sm['controlsState'].vCruise
@@ -100,7 +103,7 @@ class LongitudinalPlanner:
     # No change cost when user is controlling the speed, or when standstill
     prev_accel_constraint = not (reset_state or sm['carState'].standstill)
 
-    if self.mpc.mode == 'acc':
+    if self.mpc.mode == 'acc' and not self.maneuvering:
       accel_limits = [A_CRUISE_MIN, get_max_accel(v_ego)]
       accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngleDeg, accel_limits, self.CP)
     else:

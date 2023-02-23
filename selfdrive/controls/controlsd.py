@@ -3,7 +3,6 @@ import os
 import math
 from typing import SupportsFloat
 
-from selfdrive.controls.lib.drive_helpers import CONTROL_N
 from cereal import car, log
 from common.numpy_fast import clip
 from common.realtime import sec_since_boot, config_realtime_process, Priority, Ratekeeper, DT_CTRL
