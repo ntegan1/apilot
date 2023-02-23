@@ -202,7 +202,7 @@ class LongitudinalPlanner:
     longitudinalPlan.fcw = self.fcw
 
     if self.maneuvering:
-      t = (plan_send.logMonoTime/1e9 - self.maneuverStartMonoTime)
+      t = (plan_send.logMonoTime - self.maneuverStartMonoTime)/1e9
       longitudinalPlan.speeds = self.maneuver.get_speeds(t).tolist()
       longitudinalPlan.accels = self.maneuver.get_accels(t).tolist()
       longitudinalPlan.jerks = [0.] * CONTROL_N
@@ -210,9 +210,8 @@ class LongitudinalPlanner:
       if (self.ii % 8) == 0:
         print("maneuver")
         print(longitudinalPlan.speeds)
-        print(plan_send.logMonoTime / 1e9)
-        print(self.maneuverStartMonoTime)
-        print(longitudinalPlan.speeds)
+        print(longitudinalPlan.accels)
+        print(t)
 
     self.ii = self.ii + 1
 
