@@ -81,11 +81,11 @@ class LongitudinalPlanner:
   def maneuver_update(self, be, lmt):
     for b in be:
       if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-        if b.pressed is True and not self.maneuvering:
+        if b.pressed is True:
           print("longplanner update maneuver pressed")
           self.maneuvering = True
           self.maneuverStartMonoTime = lmt
-        if b.pressed is False and self.maneuvering:
+        elif b.pressed is False:
           print("longplanner update maneuver not pressed")
           self.maneuvering = False
           self.maneuverStartMonoTime = None
