@@ -24,20 +24,46 @@ A_CRUISE_MAX_BP = [0., 10.0, 25., 40.]
 _A_TOTAL_MAX_V = [1.7, 3.2]
 _A_TOTAL_MAX_BP = [20., 40.]
 
+def control_n_interp(t, times, vals):
+  if t < 0:
+    t = 0
+  a = [0.] * CONTROL_N
+  return [np.interp(f, times, vals) for f in a]
 class Maneuver:
-  speeds = [ #mph
-    0., 0., 5., 7., 12., 0.,
+  tva = [
+    # time, vel(mph), accel
+    (0., 0., -.4),
+    (3., 0., -.4),
+    (3.001, 5., 0.),
+    (4.1, 5., 0.),
+    (4.101, 5., .5),
+    (10., 5., .5),
+    (10.01, 5., 0.),
+    (13., 5., 0.),
+    (18., 0., 0.),
+    (23., 0., 0.),
+    (23.1, 0., -.8),
+    (28., 0., -.8),
   ]
-  accels = [
-    -.4, -.4, 
-  ]
-  times = [
-    0., 5.,
-  ]
+  speeds = []
+  accels = []
+  times = []
+  def get_accels(self, t):
+    return control_n_interp(t, self.times, self.accels)
+  def get_speeds(self, t):
+    return control_n_interp(t, self.times, self.speeds)
   def __convert_mph_to_ms(self):
-    self.true = False
+    self.tva = [(a[0], a[1] * CV.MPH_TO_MS, a[2]) for a in self.tva]
+  def __tva_to_speeds_accels_times(self):
+    if len(self.speeds) > 0:
+      return
+    for f in self.tva:
+      self.speeds.append(f[1])
+      self.accels.append(f[2])
+      self.times.append(f[0])
   def __init__(self):
     self.__convert_mph_to_ms()
+    self.__tva_to_speeds_accels_times()
 
 def get_max_accel(v_ego):
   return interp(v_ego, A_CRUISE_MAX_BP, A_CRUISE_MAX_VALS)
@@ -60,6 +86,7 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 class LongitudinalPlanner:
   def __init__(self, CP, init_v=0.0, init_a=0.0):
+    self.maneuver = Maneuver()
     self.maneuvering = False
     self.maneuverStartMonoTime = None # this * 1e9 = seconds
     self.CP = CP
@@ -180,8 +207,9 @@ class LongitudinalPlanner:
     longitudinalPlan.fcw = self.fcw
 
     if self.maneuvering and not self.fcw:
-      longitudinalPlan.speeds = [5. * CV.MPH_TO_MS] * CONTROL_N
-      longitudinalPlan.accels = [-1.] * CONTROL_N
+      t = (plan_send.logMonoTime - self.maneuverStartMonoTime) / 1e9
+      longitudinalPlan.speeds = self.maneuver.get_speeds(t)
+      longitudinalPlan.accels = self.maneuver.get_accels(t)
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
 
