@@ -87,15 +87,13 @@ class LongitudinalPlanner:
     for b in be:
       if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
         if b.pressed is True:
-          print("longplanner update maneuver pressed")
           self.maneuvering = True
           self.maneuverStartMonoTime = lmt
         elif b.pressed is False:
-          print("longplanner update maneuver not pressed")
           self.maneuvering = False
           self.maneuverStartMonoTime = None
+
   def __init__(self, CP, init_v=0.0, init_a=0.0):
-    self.ii = 0
     self.maneuver = Maneuver()
     self.maneuvering = False
     self.maneuverStartMonoTime = None # this * 1e9 = seconds
@@ -214,13 +212,6 @@ class LongitudinalPlanner:
       longitudinalPlan.accels = self.maneuver.get_accels(t).tolist()
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
-      if (self.ii % 8) == 0:
-        print("maneuver")
-        print(longitudinalPlan.speeds)
-        print(longitudinalPlan.accels)
-        print(t)
-
-    self.ii = self.ii + 1
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 

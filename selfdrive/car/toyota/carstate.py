@@ -10,6 +10,7 @@ from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.toyota.values import ToyotaFlags, CAR, DBC, STEER_THRESHOLD, NO_STOP_TIMER_CAR, TSS2_CAR, RADAR_ACC_CAR, EPS_SCALE, UNSUPPORTED_DSU_CAR
 
+
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
@@ -88,16 +89,11 @@ class CarState(CarStateBase):
     be = []
     if self.smartDsu:
       fd_button = cp.vl["SDSU"]["FD_BUTTON"] == 1
-      #should_update = self.gapAdjustCruisePrev is None
       should_update = not (self.gapAdjustCruisePrev == fd_button)
       if should_update:
         event = car.CarState.ButtonEvent.new_message()
         event.type = car.CarState.ButtonEvent.Type.gapAdjustCruise
         event.pressed = fd_button
-        if fd_button:
-          print("carstate pressed: ")
-        else:
-          print("carstate not pressed: ")
         be.append(event)
         self.gapAdjustCruisePrev = fd_button
     ret.buttonEvents = be

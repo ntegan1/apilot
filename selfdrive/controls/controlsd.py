@@ -600,17 +600,15 @@ class Controls:
     for b in be:
       if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
         if b.pressed is True:
-          print("controlsd pressed")
           maneuver_reset = True
         elif b.pressed is False:
           maneuver_reset = True
-          print("controlsd not pressed")
 
     if maneuver_reset:
-      print("controlsd maneuver reset")
+      print("controlsd maneuver reset todo is this a good idea?")
     if not CC.latActive:
       self.LaC.reset()
-    if not CC.longActive:
+    if not CC.longActive or maneuver_reset:
       self.LoC.reset(v_pid=CS.vEgo)
 
     if not self.joystick_mode:
