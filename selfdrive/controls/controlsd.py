@@ -60,6 +60,7 @@ ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
+    self.maneuvering = False
     config_realtime_process(4, Priority.CTRL_HIGH)
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
@@ -595,10 +596,17 @@ class Controls:
       self.last_blinker_frame = self.sm.frame
 
     # State specific actions
+    maneuver_reset = False
+    maneuvering = long_plan.longitudinalPlanSource == 'maneuver'
+    if not self.maneuvering == maneuvering:
+      maneuver_reset = True
+      self.maneuvering = maneuvering
 
+    if maneuver_reset:
+      print("controlsd maneuver reset todo is this a good idea?")
     if not CC.latActive:
       self.LaC.reset()
-    if not CC.longActive:
+    if not CC.longActive or maneuver_reset:
       self.LoC.reset(v_pid=CS.vEgo)
 
     if not self.joystick_mode:

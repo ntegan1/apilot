@@ -37,13 +37,15 @@ def plannerd_thread(sm=None, pm=None):
 
   if sm is None:
     sm = messaging.SubMaster(['carControl', 'carState', 'controlsState', 'radarState', 'modelV2'],
-                             poll=['radarState', 'modelV2'], ignore_avg_freq=['radarState'])
+                             poll=['radarState', 'modelV2', 'carState'], ignore_avg_freq=['radarState'])
 
   if pm is None:
     pm = messaging.PubMaster(['longitudinalPlan', 'lateralPlan', 'uiPlan'])
 
   while True:
     sm.update()
+    if sm.updated['carState']:
+      longitudinal_planner.maneuver_update(sm['carState'].genericToggle, sm.logMonoTime['carState'])
 
     if sm.updated['modelV2']:
       lateral_planner.update(sm)
