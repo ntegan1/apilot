@@ -84,6 +84,7 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 class LongitudinalPlanner:
   def maneuver_update(self, be, lmt):
+    # todo generic toggle
     for b in be:
       if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
         if b.pressed is True:
@@ -201,17 +202,19 @@ class LongitudinalPlanner:
       longitudinalPlan.speeds = self.v_desired_trajectory.tolist()
       longitudinalPlan.accels = self.a_desired_trajectory.tolist()
       longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
-
-    longitudinalPlan.hasLead = sm['radarState'].leadOne.status
-    longitudinalPlan.longitudinalPlanSource = self.mpc.source
-    longitudinalPlan.fcw = self.fcw
-
-    if self.maneuvering:
-      t = (plan_send.logMonoTime - self.maneuverStartMonoTime)/1e9
+      longitudinalPlan.hasLead = sm['radarState'].leadOne.status
+      longitudinalPlan.longitudinalPlanSource = self.mpc.source
+    else:
+      t_ns = plan_send.logMonoTime - self.maneuverStartMonoTime
+      t_s = t_ns / 1e9
+      t = t_s
       longitudinalPlan.speeds = self.maneuver.get_speeds(t).tolist()
       longitudinalPlan.accels = self.maneuver.get_accels(t).tolist()
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
+      longitudinalPlan.longitudinalPlanSource = 'maneuver'
+
+    longitudinalPlan.fcw = self.fcw
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 

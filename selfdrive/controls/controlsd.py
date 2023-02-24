@@ -60,6 +60,7 @@ ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
+    self.maneuvering = False
     config_realtime_process(4, Priority.CTRL_HIGH)
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
@@ -595,18 +596,15 @@ class Controls:
       self.last_blinker_frame = self.sm.frame
 
     # State specific actions
-    be = CS.buttonEvents
     maneuver_reset = False
-    for b in be:
-      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-        if b.pressed is True:
-          maneuver_reset = True
-        elif b.pressed is False:
-          maneuver_reset = True
+    maneuvering = long_plan.longitudinalPlanSource == 'maneuver'
+    if not self.maneuvering == maneuvering:
+      maneuver_reset = False
+      self.maneuvering = maneuvering
 
     if maneuver_reset:
       print("controlsd maneuver reset todo is this a good idea?")
-    maneuver_reset = False
+    #maneuver_reset = False
     if not CC.latActive:
       self.LaC.reset()
     if not CC.longActive or maneuver_reset:
