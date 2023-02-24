@@ -45,7 +45,7 @@ def plannerd_thread(sm=None, pm=None):
   while True:
     sm.update()
     if sm.updated['carState']:
-      longitudinal_planner.maneuver_update(sm['carState'].buttonEvents, sm.logMonoTime['carState'])
+      longitudinal_planner.maneuver_update(sm['carState'].genericToggle, sm.logMonoTime['carState'])
 
     if sm.updated['modelV2']:
       lateral_planner.update(sm)
