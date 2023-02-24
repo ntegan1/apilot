@@ -28,20 +28,20 @@ def control_n_interp(t, times, vals):
   idxs = [ff + t for ff in T_IDXS[:CONTROL_N]]
   return np.interp(idxs, times, vals)
 class Maneuver:
+  # todo: fstat(/tmp/maneuver) and read on update
+  # todo: maneuvers as function of initial vego
+  # todo: list of maneuvers and cycle through
   tva = [
     # time, vel(mph), accel
-    (0., 0., -.4),
-    (3., 0., -.4),
-    (3.001, 5., 0.),
-    (4.1, 5., 0.),
-    (4.101, 5., .5),
-    (10., 5., .5),
-    (10.01, 5., 0.),
-    (13., 5., 0.),
-    (18., 0., 0.),
-    (23., 0., 0.),
-    (23.1, 0., -.8),
-    (28., 0., -.8),
+    (0., 20., 0.),
+    (0.1, 15., -.4),
+    (0.3, 8., -.4),
+    (1.4, 8., -.6),
+    (4.4, 4., -.9),
+    (4.9, 4., -.9),
+    (5.3, 0., -.7),
+    (6.3, 0., -.7),
+    (6.6, 0., -.4),
   ]
   speeds = []
   accels = []
@@ -83,15 +83,15 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
 
 
 class LongitudinalPlanner:
-  def maneuver_update(self, be, lmt):
-    for b in be:
-      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
-        if b.pressed is True:
-          self.maneuvering = True
-          self.maneuverStartMonoTime = lmt
-        elif b.pressed is False:
-          self.maneuvering = False
-          self.maneuverStartMonoTime = None
+  def maneuver_update(self, enabled, lmt):
+    rising_edge = enabled and not self.maneuvering
+    falling_edge = not enabled and self.maneuvering
+    if rising_edge:
+      self.maneuvering = True
+      self.maneuverStartMonoTime = lmt
+    elif falling_edge:
+      self.maneuvering = False
+      self.maneuverStartMonoTime = None
 
   def __init__(self, CP, init_v=0.0, init_a=0.0):
     self.maneuver = Maneuver()
@@ -201,17 +201,19 @@ class LongitudinalPlanner:
       longitudinalPlan.speeds = self.v_desired_trajectory.tolist()
       longitudinalPlan.accels = self.a_desired_trajectory.tolist()
       longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
-
-    longitudinalPlan.hasLead = sm['radarState'].leadOne.status
-    longitudinalPlan.longitudinalPlanSource = self.mpc.source
-    longitudinalPlan.fcw = self.fcw
-
-    if self.maneuvering:
-      t = (plan_send.logMonoTime - self.maneuverStartMonoTime)/1e9
+      longitudinalPlan.hasLead = sm['radarState'].leadOne.status
+      longitudinalPlan.longitudinalPlanSource = self.mpc.source
+    else:
+      t_ns = plan_send.logMonoTime - self.maneuverStartMonoTime
+      t_s = t_ns / 1e9
+      t = t_s
       longitudinalPlan.speeds = self.maneuver.get_speeds(t).tolist()
       longitudinalPlan.accels = self.maneuver.get_accels(t).tolist()
       longitudinalPlan.jerks = [0.] * CONTROL_N
       longitudinalPlan.hasLead = True
+      longitudinalPlan.longitudinalPlanSource = 'maneuver'
+
+    longitudinalPlan.fcw = self.fcw
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 

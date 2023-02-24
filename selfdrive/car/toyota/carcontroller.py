@@ -41,15 +41,13 @@ class CarController:
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
 
     # gas and brake
-    MPH_TO_MS = .447
-    mtm = MPH_TO_MS
     if self.CP.enableGasInterceptor and CC.longActive:
       MAX_INTERCEPTOR_GAS = 0.5
       # RAV4 has very sensitive gas pedal
       if self.CP.carFingerprint in (CAR.RAV4, CAR.RAV4H, CAR.HIGHLANDER, CAR.HIGHLANDERH):
         PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.15, 0.3, 0.0])
       elif self.CP.carFingerprint in (CAR.COROLLA,):
-        PEDAL_SCALE = interp(CS.out.vEgo, [0.0, 4.*mtm, 8.*mtm, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [.12, .19, 0.3, 0.4, 0.0])
+        PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.3, 0.4, 0.0])
       else:
         PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.4, 0.5, 0.0])
       # offset for creep and windbrake
