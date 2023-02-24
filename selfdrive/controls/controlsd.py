@@ -599,12 +599,11 @@ class Controls:
     maneuver_reset = False
     maneuvering = long_plan.longitudinalPlanSource == 'maneuver'
     if not self.maneuvering == maneuvering:
-      maneuver_reset = False
+      maneuver_reset = True
       self.maneuvering = maneuvering
 
     if maneuver_reset:
       print("controlsd maneuver reset todo is this a good idea?")
-    #maneuver_reset = False
     if not CC.latActive:
       self.LaC.reset()
     if not CC.longActive or maneuver_reset:
