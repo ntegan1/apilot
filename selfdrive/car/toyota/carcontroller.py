@@ -39,7 +39,7 @@ class CarController:
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
-    actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, 0.)
+    actuators.accel = clip(actuators.accel, CarControllerParams.ACCEL_MIN, -0.4)
 
     # gas and brake
     MPH_TO_MS = .447
