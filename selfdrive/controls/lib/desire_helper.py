@@ -6,7 +6,9 @@ LaneChangeState = log.LateralPlan.LaneChangeState
 LaneChangeDirection = log.LateralPlan.LaneChangeDirection
 
 LANE_CHANGE_SPEED_MIN = 20 * CV.MPH_TO_MS
-LANE_CHANGE_TIME_MAX = 10.
+TURN_CHANGE_SPEED_MIN = 8 * CV.MPH_TO_MS
+LANE_CHANGE_TIME_MAX = 14.
+TURN_CHANGE_TIME_MAX = 4.
 
 DESIRES = {
   LaneChangeDirection.none: {
@@ -17,13 +19,13 @@ DESIRES = {
   },
   LaneChangeDirection.left: {
     LaneChangeState.off: log.LateralPlan.Desire.none,
-    LaneChangeState.preLaneChange: log.LateralPlan.Desire.none,
-    LaneChangeState.laneChangeStarting: log.LateralPlan.Desire.laneChangeLeft,
-    LaneChangeState.laneChangeFinishing: log.LateralPlan.Desire.laneChangeLeft,
+    LaneChangeState.preLaneChange: log.LateralPlan.Desire.lanechangeRight,
+    LaneChangeState.laneChangeStarting: log.LateralPlan.Desire.lanechangeRight,
+    LaneChangeState.laneChangeFinishing: log.LateralPlan.Desire.turnRight,
   },
   LaneChangeDirection.right: {
     LaneChangeState.off: log.LateralPlan.Desire.none,
-    LaneChangeState.preLaneChange: log.LateralPlan.Desire.none,
+    LaneChangeState.preLaneChange: log.LateralPlan.Desire.keepRight,
     LaneChangeState.laneChangeStarting: log.LateralPlan.Desire.laneChangeRight,
     LaneChangeState.laneChangeFinishing: log.LateralPlan.Desire.laneChangeRight,
   },
@@ -43,9 +45,12 @@ class DesireHelper:
   def update(self, carstate, lateral_active, lane_change_prob):
     v_ego = carstate.vEgo
     one_blinker = carstate.leftBlinker != carstate.rightBlinker
-    below_lane_change_speed = v_ego < LANE_CHANGE_SPEED_MIN
+    below_turn_change_speed = v_ego < TURN_CHANGE_SPEED_MIN
+    below_lane_change_speed = v_ego < LANE_CHANGE_SPEED_MIN and not below_turn_change_speed;
 
-    if not lateral_active or self.lane_change_timer > LANE_CHANGE_TIME_MAX:
+    f = LANE_CHANGE_TIME_MAX if not below_turn_change_speed else TURN_CHANGE_TIME_MAX
+
+    if not lateral_active or self.lane_change_timer > f:
       self.lane_change_state = LaneChangeState.off
       self.lane_change_direction = LaneChangeDirection.none
     else:
@@ -74,8 +79,8 @@ class DesireHelper:
 
       # LaneChangeState.laneChangeStarting
       elif self.lane_change_state == LaneChangeState.laneChangeStarting:
-        # fade out over .5s
-        self.lane_change_ll_prob = max(self.lane_change_ll_prob - 2 * DT_MDL, 0.0)
+        # fade out over .5s * 2? maybe
+        self.lane_change_ll_prob = max(self.lane_change_ll_prob - 4 * DT_MDL, 0.0)
 
         # 98% certainty
         if lane_change_prob < 0.02 and self.lane_change_ll_prob < 0.01:
@@ -83,7 +88,7 @@ class DesireHelper:
 
       # LaneChangeState.laneChangeFinishing
       elif self.lane_change_state == LaneChangeState.laneChangeFinishing:
-        # fade in laneline over 1s
+        # fade in laneline over 1s?
         self.lane_change_ll_prob = min(self.lane_change_ll_prob + DT_MDL, 1.0)
 
         if self.lane_change_ll_prob > 0.99:
