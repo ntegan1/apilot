@@ -10,7 +10,6 @@ from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
 from selfdrive.car.toyota.values import ToyotaFlags, CAR, DBC, STEER_THRESHOLD, NO_STOP_TIMER_CAR, TSS2_CAR, RADAR_ACC_CAR, EPS_SCALE, UNSUPPORTED_DSU_CAR
 
-
 class CarState(CarStateBase):
   def __init__(self, CP):
     super().__init__(CP)
@@ -19,6 +18,8 @@ class CarState(CarStateBase):
     self.eps_torque_scale = EPS_SCALE[CP.carFingerprint] / 100.
     self.cluster_speed_hyst_gap = CV.KPH_TO_MS / 2.
     self.cluster_min_speed = CV.KPH_TO_MS / 2.
+    self.smartDsu = CP.openpilotLongitudinalControl and not CP.enableDsu and not (CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR))
+    self.gapAdjustCruisePrev = None
 
     # On cars with cp.vl["STEER_TORQUE_SENSOR"]["STEER_ANGLE"]
     # the signal is zeroed to where the steering angle is at start.
@@ -83,6 +84,19 @@ class CarState(CarStateBase):
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
     ret.leftBlinker = cp.vl["BLINKERS_STATE"]["TURN_SIGNALS"] == 1
     ret.rightBlinker = cp.vl["BLINKERS_STATE"]["TURN_SIGNALS"] == 2
+
+    be = []
+    if self.smartDsu:
+      fd_button = cp.vl["SDSU"]["FD_BUTTON"] == 1
+      #should_update = self.gapAdjustCruisePrev is None
+      should_update = not (self.gapAdjustCruisePrev == fd_button)
+      if should_update:
+        event = car.CarState.ButtonEvent.new_message()
+        event.type = car.CarState.ButtonEvent.Type.gapAdjustCruise
+        event.pressed = fd_button
+        be.append(event)
+        self.gapAdjustCruisePrev = fd_button
+    ret.buttonEvents = be
 
     ret.steeringTorque = cp.vl["STEER_TORQUE_SENSOR"]["STEER_TORQUE_DRIVER"]
     ret.steeringTorqueEps = cp.vl["STEER_TORQUE_SENSOR"]["STEER_TORQUE_EPS"] * self.eps_torque_scale
@@ -224,6 +238,11 @@ class CarState(CarStateBase):
       signals.append(("INTERCEPTOR_GAS", "GAS_SENSOR"))
       signals.append(("INTERCEPTOR_GAS2", "GAS_SENSOR"))
       checks.append(("GAS_SENSOR", 50))
+
+    smartDsu = CP.openpilotLongitudinalControl and not CP.enableDsu and not (CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR))
+    if smartDsu:
+      signals.append(("FD_BUTTON", "SDSU"))
+      checks.append(("SDSU", 33))
 
     if CP.enableBsm:
       signals += [
