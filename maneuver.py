@@ -1,50 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-
-        #set key fixed right top vertical autotitle
-        #set key fixed right top vertical autotitle
-        #set key fixed right top vertical autotitle columnheader;
-scriptold = """ \
-        data = "maneuver.csv";
-        set datafile columnheader;
-        set key opaque autotitle columnhead;
-        plot for [i=2:3] data using 1:i title columnhead(i) with lines;
-        exit;
-        set datafile columnheaders;
-        set key autotitle columnhead ;
-        plot data using 1:2 with lines, data using 1:3 with lines;
-        exit;
-        set key autotitle columnhead opaque;
-        plot "maneuver.csv" with lines, "maneuver.csv" using 1:3 with lines;
-        exit;
-        set datafile columnheaders;
-        set key autotitle columnhead opaque;
-        plot "maneuver.csv" using 1:2 with lines title columnheader(1), "maneuver.csv" using 1:3 with lines title columnheader(3);
-        exit;
-        set key autotitle columnheader;
-        plot "maneuver.csv" using 1:3 with lines title columnhead(2), "maneuver.csv" using 1:2 with lines title columnhead(3);
-        exit;
-        plot "maneuver.csv" using 1:3 with lines title columnhead(3), "maneuver.csv" using 1:2 with lines title columnhead(2)
-"""
-
-
-        #plot "+" using ($1):(sin($1)):(sin($1)**2) with filledcurves;
-        #set grid
-        #set xtics
-
-old2script = """ \
-        set term wxt background rgb "0x333333" size 400,700 position 15,25;
-        set border lc "0x00f0f0f0";
-        set key tc rgb "0x00f0f0f0" box lc "0x00f0f0f0";
-        data = "maneuver.csv";
-        set datafile columnheader;
-        set datafile separator ",";
-        set key opaque autotitle columnhead;
-        plot data using 1:3 title columnhead(3) with lines lc rgbcolor "0x00c9211a", data using ($1):(2.23694*($2)) title "".columnhead(2)." (mph)" with lines lc rgbcolor "0x001f77b4";
-        exit;
-        plot for [i=2:3] data using 1:i title columnhead(i) with lines, data using ($1):(2.23694*($2)) title "".columnhead(2)." (mph)" with lines lc rgbcolor "0x001f77b4";
-"""
 script = """ \
         set mxtics;
         set mytics;
@@ -84,11 +40,13 @@ dat = messaging.new_message('testJoystick')
 maneuver = dat.testJoystick.maneuver
 mp = maneuver.init("maneuverPlan")
 plan = mp.init("plan", len(tva[0]))
-#plan = mp.plan.init("ManeuverPlanPoint", len(tva[0]))
-#print(dir(mp.plan))
 print(plan)
-#plan.init("ManeuverPlanPoint", len(tva[0]))
-#print(dir(plan))
+for i in range(len(tva[0])):
+  plan[i].t = tva[0][i]
+  plan[i].v = tva[1][i]
+  plan[i].a = tva[2][i]
+print(plan)
+
 exit()
 
 #pm.send('testJoystick', dat)
