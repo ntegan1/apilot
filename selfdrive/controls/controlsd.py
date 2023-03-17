@@ -599,10 +599,7 @@ class Controls:
 
     if not self.joystick_mode:
       # accel PID loop
-      if maneuvering:
-        pid_accel_limits = (self.CP.ACCEL_MIN, self.CP.ACCEL_MAX)
-      else:
-        pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_helper.v_cruise_kph * CV.KPH_TO_MS)
+      pid_accel_limits = self.CI.get_pid_accel_limits(self.CP, CS.vEgo, self.v_cruise_helper.v_cruise_kph * CV.KPH_TO_MS)
       t_since_plan = (self.sm.frame - self.sm.rcv_frame['longitudinalPlan']) * DT_CTRL
       actuators.accel = self.LoC.update(CC.longActive, CS, long_plan, pid_accel_limits, t_since_plan)
 

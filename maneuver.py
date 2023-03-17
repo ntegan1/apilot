@@ -2,7 +2,6 @@
 
 import os
 import sys
-import cereal.messaging as messaging
 
 csv_file = sys.argv[1]
 
@@ -12,7 +11,7 @@ script = """ \
         set term wxt background rgb "0x333333" size 400,700 position 15,25;
         set border lc "0x00f0f0f0";
         set key tc rgb "0x00f0f0f0" box lc "0x00f0f0f0";
-        data = "maneuver.csv";
+        data = """ + '"' + csv_file + '";' + """;
         set datafile columnheader;
         set datafile separator ",";
         set key opaque autotitle columnhead;
@@ -20,6 +19,10 @@ script = """ \
         set grid ytics mytics lc rgb "0x00f0f0f0", lc rgb "0x40f0f0f0";
         plot data using 1:3 title columnhead(3) with lines lc rgbcolor "0x00c9211a", data using ($1):(2.23694*($2)) title "".columnhead(2)." (mph)" with lines lc rgbcolor "0x001f77b4";
 """
+
+os.system("gnuplot -p -e '" + script + "'")
+exit()
+import cereal.messaging as messaging
 
 pm = messaging.PubMaster(['testJoystick'])
 
@@ -38,7 +41,6 @@ def get_tva():
     return t, v, a
 
 tva = get_tva()
-#os.system("gnuplot -p -e '" + script + "'")
 
 dat = messaging.new_message('testJoystick')
 maneuver = dat.testJoystick.maneuver
