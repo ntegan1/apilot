@@ -23,8 +23,7 @@ A_CRUISE_MAX_BP = [0., 10.0, 25., 40.]
 _A_TOTAL_MAX_V = [1.7, 3.2]
 _A_TOTAL_MAX_BP = [20., 40.]
 
-
-def Maneuver:
+class Maneuver:
   __maneuvering = False
   __maneuver_start = None
   __maneuver_duration = None
