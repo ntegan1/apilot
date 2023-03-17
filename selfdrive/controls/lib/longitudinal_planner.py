@@ -24,6 +24,68 @@ _A_TOTAL_MAX_V = [1.7, 3.2]
 _A_TOTAL_MAX_BP = [20., 40.]
 
 
+def Maneuver:
+  __maneuvering = False
+  __maneuver_start = None
+  __maneuver_duration = None
+  __maneuver_plan = None
+  __tva = None
+  def get_instantaneous_v_desired(self, lmt):
+    t = lmt - self.__maneuver_start
+    return interp(t / 1e9, self.__tva[0], self.__tva[1])
+  def get_instantaneous_a_desired(self, lmt):
+    t = lmt - self.__maneuver_start
+    return interp(t / 1e9, self.__tva[0], self.__tva[2])
+  def get_maneuvering(self):
+    return self.__maneuvering
+  def get_vaj(self, lmt):
+    t = lmt - self.__maneuver_start
+    idxs = [ff + t / 1e9 for ff in T_IDXS[:CONTROL_N]]
+    v = np.interp(idxs, self.__tva[0], self.__tva[1]).tolist()
+    a = np.interp(idxs, self.__tva[0], self.__tva[2]).tolist()
+    j = [0.] * CONTROL_N
+    return [v, a, j]
+  def __update_plan(self, mp):
+    self.__maneuvering = False
+    self.__maneuver_start = None
+    t = []
+    v = []
+    a = []
+    for p in mp.plan:
+      t.append(p.t)
+      v.append(p.v)
+      a.append(p.a)
+    self.__maneuver_duration = t[-1] - t[0]
+    self.__tva = [t, v, a]
+    # fill 
+    pass
+  def update(self, sm):
+    t = sm.logMonoTime['testJoystick']
+    __t = sm.logMonoTime['modelV2']
+    if __t > t:
+      t = __t
+    # state change
+    if sm.updated["testJoystick"]:
+      tj = sm['testJoystick']
+      w = tj.maneuver.which()
+      if w == "maneuverPlan":
+        self.__update_plan(tj.maneuver.maneuverPlan)
+      elif w == "maneuverBegin":
+        if self.__maneuver_plan is not None:
+          self.__maneuvering = True
+          self.__maneuver_start = t
+
+    # do if maneuvering
+    if self.__maneuvering:
+      t_elapsed = t - self.__maneuver_start
+      if t_elapsed > self.__maneuver_duration:
+        self.__maneuvering = False
+        self.__maneuver_start = None
+    # always do
+  def __init__(self):
+    pass
+
+
 def get_max_accel(v_ego):
   return interp(v_ego, A_CRUISE_MAX_BP, A_CRUISE_MAX_VALS)
 
@@ -48,6 +110,7 @@ class LongitudinalPlanner:
     self.CP = CP
     self.mpc = LongitudinalMpc()
     self.fcw = False
+    self.m = Maneuver()
 
     self.a_desired = init_a
     self.v_desired_filter = FirstOrderFilter(init_v, 2.0, DT_MDL)
@@ -75,12 +138,19 @@ class LongitudinalPlanner:
     return x, v, a, j
 
   def update(self, sm):
+    # plannerd callse update on modeld?
+    lmt = sm.logMonoTime['modelV2']
     self.mpc.mode = 'blended' if sm['controlsState'].experimentalMode else 'acc'
+    self.m.update(sm)
 
     v_ego = sm['carState'].vEgo
     v_cruise_kph = sm['controlsState'].vCruise
     v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX)
     v_cruise = v_cruise_kph * CV.KPH_TO_MS
+
+    if self.m.get_maneuvering():
+      # set v cruise to current?cruise?interpedvel?
+      v_cruise = self.m.get_instantaneous_v_desired(lmt)
 
     long_control_off = sm['controlsState'].longControlState == LongCtrlState.off
     force_slow_decel = sm['controlsState'].forceDecel
@@ -91,7 +161,7 @@ class LongitudinalPlanner:
     # No change cost when user is controlling the speed, or when standstill
     prev_accel_constraint = not (reset_state or sm['carState'].standstill)
 
-    if self.mpc.mode == 'acc':
+    if self.mpc.mode == 'acc' and not self.m.get_maneuvering():
       accel_limits = [A_CRUISE_MIN, get_max_accel(v_ego)]
       accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngleDeg, accel_limits, self.CP)
     else:
@@ -99,9 +169,14 @@ class LongitudinalPlanner:
       accel_limits_turns = [MIN_ACCEL, MAX_ACCEL]
 
     if reset_state:
-      self.v_desired_filter.x = v_ego
-      # Clip aEgo to cruise limits to prevent large accelerations when becoming active
-      self.a_desired = clip(sm['carState'].aEgo, accel_limits[0], accel_limits[1])
+      if self.m.get_maneuvering():
+        # set v cruise to current?cruise?interpedvel?
+        self.v_desired_filter.x = self.m.get_instantaneous_v_desired(lmt)
+        self.a_desired = clip(self.m.get_instantaneous_a_desired(lmt), accel_limits[0], accel_limits[1])
+      else:
+        self.v_desired_filter.x = v_ego
+        # Clip aEgo to cruise limits to prevent large accelerations when becoming active
+        self.a_desired = clip(sm['carState'].aEgo, accel_limits[0], accel_limits[1])
 
     # Prevent divergence, smooth in current v_ego
     self.v_desired_filter.x = max(0.0, self.v_desired_filter.update(v_ego))
@@ -134,25 +209,36 @@ class LongitudinalPlanner:
 
     # Interpolate 0.05 seconds and save as starting point for next iteration
     a_prev = self.a_desired
-    self.a_desired = float(interp(DT_MDL, T_IDXS[:CONTROL_N], self.a_desired_trajectory))
+    if self.m.get_maneuvering():
+      self.a_desired = self.m.get_instantaneous_a_desired(lmt)
+    else:
+      self.a_desired = float(interp(DT_MDL, T_IDXS[:CONTROL_N], self.a_desired_trajectory))
     self.v_desired_filter.x = self.v_desired_filter.x + DT_MDL * (self.a_desired + a_prev) / 2.0
 
   def publish(self, sm, pm):
     plan_send = messaging.new_message('longitudinalPlan')
+    lmt = plan_send.logMonoTime
 
     plan_send.valid = sm.all_checks(service_list=['carState', 'controlsState'])
 
     longitudinalPlan = plan_send.longitudinalPlan
     longitudinalPlan.modelMonoTime = sm.logMonoTime['modelV2']
-    longitudinalPlan.processingDelay = (plan_send.logMonoTime / 1e9) - sm.logMonoTime['modelV2']
-
-    longitudinalPlan.speeds = self.v_desired_trajectory.tolist()
-    longitudinalPlan.accels = self.a_desired_trajectory.tolist()
-    longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
+    longitudinalPlan.processingDelay = (lmt / 1e9) - sm.logMonoTime['modelV2']
 
     longitudinalPlan.hasLead = sm['radarState'].leadOne.status
-    longitudinalPlan.longitudinalPlanSource = self.mpc.source
     longitudinalPlan.fcw = self.fcw
+    if self.m.get_maneuvering():
+      longitudinalPlan.longitudinalPlanSource = "maneuver"
+      vaj = self.m.get_vaj(lmt)
+      longitudinalPlan.speeds = vaj[0]
+      longitudinalPlan.accels = vaj[1]
+      longitudinalPlan.jerks = vaj[2]
+    else:
+      longitudinalPlan.longitudinalPlanSource = self.mpc.source
+      longitudinalPlan.speeds = self.v_desired_trajectory.tolist()
+      longitudinalPlan.accels = self.a_desired_trajectory.tolist()
+      longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
+
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
 
