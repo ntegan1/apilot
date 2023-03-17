@@ -60,16 +60,8 @@ script = """ \
         plot data using 1:3 title columnhead(3) with lines lc rgbcolor "0x00c9211a", data using ($1):(2.23694*($2)) title "".columnhead(2)." (mph)" with lines lc rgbcolor "0x001f77b4";
 """
 
-# vego mph #1f77b4
-# aego #c9211a
-# bg #333333
-# fg #444444
-# white f0f0f0
-
-os.system("gnuplot -p -e '" + script + "'")
-
-#import cereal.messaging as messaging
-#pm = messaging.PubMaster(['testJoystick'])
+import cereal.messaging as messaging
+pm = messaging.PubMaster(['testJoystick'])
 #
 #
 #dat = messaging.new_message('testJoystick')
@@ -77,15 +69,42 @@ os.system("gnuplot -p -e '" + script + "'")
 #dat.testJoystick.buttons = [False]
 #pm.send('testJoystick', dat)
 
+dat = messaging.new_message('testJoystick')
+maneuver = dat.testJoystick.maneuver
+maneuver.init("maneuverPlan")
+plan = maneuver.maneuverPlan.plan
+exit()
+print(plan)
+print(dir(plan))
+print(dat.testJoystick.maneuverPlan)
+#maneuver.maneuverPlan.plan = []
+#print(dir(dat.testJoystick))
+#print(dir(dat.testJoystick.maneuver))
+#print(dir(dat.testJoystick.maneuver.initManeuverPlan))
+print(dir(m))
+print(dir(m.maneuverBegin))
+pm.send('testJoystick', dat)
+
 exit()
 
-with open("maneuver.csv", "r") as f:
-  import csv
-  reader = csv.DictReader(f)
-  for row in reader:
-    f = float(row['t'])
-    print(f, end='')
-    f = float(row['v'])
-    print(f, end='')
-    f = float(row['a'])
-    print(f)
+
+# vego mph #1f77b4
+# aego #c9211a
+# bg #333333
+# fg #444444
+# white f0f0f0
+
+tva = get_tva()
+os.system("gnuplot -p -e '" + script + "'")
+def get_tva():
+  with open("maneuver.csv", "r") as f:
+    import csv
+    reader = csv.DictReader(f)
+    t = []
+    v = []
+    a = []
+    for row in reader:
+      t.append(float(row["t"]))
+      v.append(float(row["v"]))
+      a.append(float(row["a"]))
+    return t, v, a
