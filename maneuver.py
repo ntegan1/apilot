@@ -68,6 +68,15 @@ script = """ \
 
 os.system("gnuplot -p -e '" + script + "'")
 
+#import cereal.messaging as messaging
+#pm = messaging.PubMaster(['testJoystick'])
+#
+#
+#dat = messaging.new_message('testJoystick')
+#dat.testJoystick.axes = [y,x]
+#dat.testJoystick.buttons = [False]
+#pm.send('testJoystick', dat)
+
 exit()
 
 with open("maneuver.csv", "r") as f:
