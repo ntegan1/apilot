@@ -62,40 +62,8 @@ script = """ \
 
 import cereal.messaging as messaging
 pm = messaging.PubMaster(['testJoystick'])
-#
-#
-#dat = messaging.new_message('testJoystick')
-#dat.testJoystick.axes = [y,x]
-#dat.testJoystick.buttons = [False]
-#pm.send('testJoystick', dat)
-
-dat = messaging.new_message('testJoystick')
-maneuver = dat.testJoystick.maneuver
-maneuver.init("maneuverPlan")
-plan = maneuver.maneuverPlan.plan
-exit()
-print(plan)
-print(dir(plan))
-print(dat.testJoystick.maneuverPlan)
-#maneuver.maneuverPlan.plan = []
-#print(dir(dat.testJoystick))
-#print(dir(dat.testJoystick.maneuver))
-#print(dir(dat.testJoystick.maneuver.initManeuverPlan))
-print(dir(m))
-print(dir(m.maneuverBegin))
-pm.send('testJoystick', dat)
-
-exit()
 
 
-# vego mph #1f77b4
-# aego #c9211a
-# bg #333333
-# fg #444444
-# white f0f0f0
-
-tva = get_tva()
-os.system("gnuplot -p -e '" + script + "'")
 def get_tva():
   with open("maneuver.csv", "r") as f:
     import csv
@@ -108,3 +76,19 @@ def get_tva():
       v.append(float(row["v"]))
       a.append(float(row["a"]))
     return t, v, a
+
+tva = get_tva()
+#os.system("gnuplot -p -e '" + script + "'")
+
+dat = messaging.new_message('testJoystick')
+maneuver = dat.testJoystick.maneuver
+mp = maneuver.init("maneuverPlan")
+plan = mp.init("plan", len(tva[0]))
+#plan = mp.plan.init("ManeuverPlanPoint", len(tva[0]))
+#print(dir(mp.plan))
+print(plan)
+#plan.init("ManeuverPlanPoint", len(tva[0]))
+#print(dir(plan))
+exit()
+
+#pm.send('testJoystick', dat)
