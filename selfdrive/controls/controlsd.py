@@ -589,7 +589,7 @@ class Controls:
     if CS.leftBlinker or CS.rightBlinker:
       self.last_blinker_frame = self.sm.frame
 
-    maneuvering = long_plan.longitudinalPlanSource = "maneuver"
+    #maneuvering = long_plan.longitudinalPlanSource = "maneuver"
 
     # State specific actions
     if not CC.latActive:
