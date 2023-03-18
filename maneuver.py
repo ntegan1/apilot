@@ -4,7 +4,6 @@ import os
 import sys
 
 csv_file = sys.argv[1]
-
 script = """ \
         set mxtics;
         set mytics;
@@ -19,6 +18,9 @@ script = """ \
         set grid ytics mytics lc rgb "0x00f0f0f0", lc rgb "0x40f0f0f0";
         plot data using 1:3 title columnhead(3) with lines lc rgbcolor "0x00c9211a", data using ($1):(2.23694*($2)) title "".columnhead(2)." (mph)" with lines lc rgbcolor "0x001f77b4";
 """
+if len(sys.argv) > 2 and sys.argv[2] == "plot":
+  os.system("gnuplot -p -e '" + script + "'")
+  exit()
 
 import cereal.messaging as messaging
 
