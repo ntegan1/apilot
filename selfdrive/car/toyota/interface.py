@@ -231,6 +231,8 @@ class CarInterface(CarInterfaceBase):
       tune.kpV = [1.3, 1.0, 0.7]
       tune.kiBP = [0., 5., 12., 20., 27.]
       tune.kiV = [.35, .23, .20, .17, .1]
+      tune.longitudinalActuatorDelayLowerBound = 0.275
+      tune.longitudinalActuatorDelayUpperBound = 0.5 # 0.618
       if candidate in TSS2_CAR:
         ret.vEgoStopping = 0.25
         ret.vEgoStarting = 0.25

@@ -42,7 +42,7 @@ class CarController:
 
     # gas and brake
     if self.CP.enableGasInterceptor and CC.longActive:
-      MAX_INTERCEPTOR_GAS = 0.5
+      MAX_INTERCEPTOR_GAS = 0.4
       # RAV4 has very sensitive gas pedal
       if self.CP.carFingerprint in (CAR.RAV4, CAR.RAV4H, CAR.HIGHLANDER, CAR.HIGHLANDERH):
         PEDAL_SCALE = interp(CS.out.vEgo, [0.0, MIN_ACC_SPEED, MIN_ACC_SPEED + PEDAL_TRANSITION], [0.15, 0.3, 0.0])
