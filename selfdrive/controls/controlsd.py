@@ -3,6 +3,7 @@ import os
 import math
 from typing import SupportsFloat
 
+from selfdrive.controls.lib.drive_helpers import CONTROL_N
 from cereal import car, log
 from common.numpy_fast import clip
 from common.realtime import sec_since_boot, config_realtime_process, Priority, Ratekeeper, DT_CTRL
@@ -60,6 +61,8 @@ ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
+    self.maneuvering = False
+    self.maneuver_begin_frame = None
     config_realtime_process(4, Priority.CTRL_HIGH)
 
     # Ensure the current branch is cached, otherwise the first iteration of controlsd lags
@@ -570,6 +573,22 @@ class Controls:
 
     lat_plan = self.sm['lateralPlan']
     long_plan = self.sm['longitudinalPlan']
+
+    for b in CS.buttonEvents:
+      if b.type == car.CarState.ButtonEvent.Type.gapAdjustCruise:
+        if b.pressed is True:
+          self.LoC.reset(v_pid=CS.vEgo)
+          self.maneuvering = True
+          self.maneuver_begin_frame = self.sm.frame
+        elif b.pressed is False:
+          self.LoC.reset(v_pid=CS.vEgo)
+          self.maneuvering = False
+          self.maneuver_begin_frame = None
+
+    if self.maneuvering:
+      long_plan.speeds = [5. * CV.MPH_TO_MS] * CONTROL_N
+      long_plan.accels = [-1.] * CONTROL_N
+      long_plan.jerks = [0.] * CONTROL_N
 
     CC = car.CarControl.new_message()
     CC.enabled = self.enabled
